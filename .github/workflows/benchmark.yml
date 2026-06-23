@@ -39,7 +39,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod u+x llvm.sh
-          DEV_VERSION=$(awk -F'[][]' '/LLVM_VERSION_PATTERNS/ {print $2}' llvm.sh | sort -n | tail -n 1)
+          DEV_VERSION=$(apt-cache search '^clang-[0-9]+$' | grep -oP 'clang-\K[0-9]+' | sort -n | tail -1)
           sudo ./llvm.sh $DEV_VERSION
           echo "CXX_BIN=/usr/bin/clang++-$DEV_VERSION" >> $GITHUB_ENV
 
@@ -75,7 +75,7 @@ jobs:
 
       - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
-        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ matrix.cmake_cxx }} -DBNCH_SWT_BENCHMARKS=TRUE -DPRINT_ASSEMBLY=TRUE
+        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl -DBNCH_SWT_BENCHMARKS=TRUE -DPRINT_ASSEMBLY=TRUE
 
       - name: Build
         run: cmake --build ./Build --config=Release -v
@@ -121,7 +121,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           sudo chmod +x /usr/local/bin/benchmarksuite-main
-          /usr/local/bin/benchmarksuite-main
+          sudo /usr/local/bin/benchmarksuite-main
 
       - name: Run (Windows)
         if: runner.os == 'Windows'

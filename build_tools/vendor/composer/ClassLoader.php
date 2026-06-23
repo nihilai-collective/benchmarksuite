@@ -50,7 +50,7 @@ class ClassLoader
 
     // PSR-4
     /**
-     * @var array<string, array<string, int>>
+     * @var array<string, array<string, int32_t>>
      */
     private $prefixLengthsPsr4 = array();
     /**

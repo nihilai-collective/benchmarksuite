@@ -1,5 +1,5 @@
 {
-  "name": "realtimechris/benchmarksuite-vcpkg-builder",
+  "name": "nihilai-collective/benchmarksuite-vcpkg-builder",
   "description": "VCPKG release builder for benchmarksuite",
   "type": "library",
   "autoload": {

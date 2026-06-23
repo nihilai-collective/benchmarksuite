@@ -1,24 +1,7 @@
-﻿#	MIT License
-#
-#	Copyright (c) 2026 RealTimeChris
-#
-#	Permission is hereby granted, free of charge, to any person obtaining a copy
-#	of this software and associated documentation files (the "Software"), to deal
-#	in the Software without restriction, including without limitation the rights
-#	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#	copies of the Software, and to permit persons to whom the Software is
-#	furnished to do so, subject to the following conditions:
-#
-#	The above copyright notice and this permission notice shall be included in all
-#	copies or substantial portions of the Software.
-#
-#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#	SOFTWARE.
+﻿# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Nihilai Collective Corp
+# https://github.com/nihilai-collective/benchmarksuite
+# unit-tests/CMakeLists.txt
 
 add_executable(benchmarksuite-unit-tests main.cpp)
 
@@ -26,7 +9,7 @@ include(FetchContent)
 
 FetchContent_Declare(
   rt-ut
-  GIT_REPOSITORY https://github.com/realtimechris/rt-ut.git
+  GIT_REPOSITORY https://github.com/nihilai-collective/rt-ut.git
   GIT_TAG main
   GIT_SHALLOW TRUE
 )
@@ -103,6 +86,7 @@ set(BNCH_SWT_CLANG_COMPILER_OPTIONS
     $<$<CONFIG:Debug>:-O0;-g;-fno-omit-frame-pointer>
     $<$<BOOL:${BNCH_SWT_ASAN_EFFECTIVE}>:-fsanitize=address;-fno-omit-frame-pointer;-fno-optimize-sibling-calls;-fsanitize-address-use-after-scope;-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=0>
     $<$<BOOL:${BNCH_SWT_UBSAN_EFFECTIVE}>:-fsanitize=undefined;-fno-sanitize-recover=all>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions;-Wno-lifetime-safety-invalidation>
     -Weverything
     -Wpedantic
     -Werror
@@ -112,6 +96,7 @@ set(BNCH_SWT_CLANG_COMPILER_OPTIONS
     -Wall
     -Wno-c++98-compat-pedantic
     -Wno-c++98-compat
+    -Wno-c++20-compat
     -Wno-padded
 )
 

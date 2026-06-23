@@ -1,37 +1,15 @@
 /*
-	MIT License
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Nihilai Collective Corp
+ * https://github.com/nihilai-collective/benchmarksuite
+ * include/benchmarksuite-incl/concepts.hpp
+ */
 
-	Copyright (c) 2024 RealTimeChris
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this
-	software and associated documentation files (the "Software"), to deal in the Software
-	without restriction, including without limitation the rights to use, copy, modify, merge,
-	publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-	persons to whom the Software is furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all copies or
-	substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-	DEALINGS IN THE SOFTWARE.
-*/
-/// https://github.com/RealTimeChris/benchmarksuite
 #pragma once
 
-#include <type_traits>
-#include <iostream>
-#include <concepts>
-#include <optional>
-#include <cstdint>
-#include <variant>
-#include <vector>
-#include <tuple>
+#include <benchmarksuite-incl/config.hpp>
 
-namespace bnch_swt {
+namespace benchmarksuite {
 
 	namespace internal {
 
@@ -95,22 +73,19 @@ namespace bnch_swt {
 			std::same_as<base_t<value_type>, std::vector<bool>::const_reference>;
 
 		template<typename value_type>
-		concept always_null_t = std::same_as<base_t<value_type>, std::nullptr_t> || std::same_as<base_t<value_type>, std::monostate> ||
-			std::same_as<base_t<value_type>, std::nullopt_t>;
+		concept always_null_t =
+			std::same_as<base_t<value_type>, std::nullptr_t> || std::same_as<base_t<value_type>, std::monostate> || std::same_as<base_t<value_type>, std::nullopt_t>;
 
 		template<typename value_type>
-		concept pointer_t = (std::is_pointer_v<base_t<value_type>> ||
-								( std::is_null_pointer_v<base_t<value_type>> && !std::is_array_v<base_t<value_type>> )) &&
-			!always_null_t<value_type>;
+		concept pointer_t =
+			(std::is_pointer_v<base_t<value_type>> || ( std::is_null_pointer_v<base_t<value_type>> && !std::is_array_v<base_t<value_type>> )) && !always_null_t<value_type>;
 
 		template<typename value_type>
 		concept floating_point_t = std::floating_point<base_t<value_type>>;
 
 		template<typename value_type>
 		concept has_substr = requires(base_t<value_type> value) {
-			{
-				value.substr(std::declval<typename base_t<value_type>::size_type>(), std::declval<typename base_t<value_type>::size_type>())
-			} -> std::same_as<base_t<value_type>>;
+			{ value.substr(std::declval<typename base_t<value_type>::size_type>(), std::declval<typename base_t<value_type>::size_type>()) } -> std::same_as<base_t<value_type>>;
 		};
 
 		template<typename value_type>
@@ -195,8 +170,8 @@ namespace bnch_swt {
 		};
 
 		template<typename value_type>
-		concept tuple_t = requires(base_t<value_type> t) { std::tuple_size<base_t<value_type>>::value; } &&
-			(has_size_equal_to_zero<value_type> || has_get_template<value_type>) && !has_data<value_type>;
+		concept tuple_t = requires(base_t<value_type> t) { std::tuple_size<base_t<value_type>>::value; } && (has_size_equal_to_zero<value_type> || has_get_template<value_type>) &&
+			!has_data<value_type>;
 
 		template<typename value_type>
 		concept optional_t = requires(base_t<value_type> opt) {
