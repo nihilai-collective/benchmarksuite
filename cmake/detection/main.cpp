@@ -1,32 +1,16 @@
 /*
-	MIT License
-
-	Copyright (c) 2024 RealTimeChris
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this
-	software and associated documentation files (the "Software"), to deal in the Software
-	without restriction, including without limitation the rights to use, copy, modify, merge,
-	publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-	persons to whom the Software is furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all copies or
-	substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-	DEALINGS IN THE SOFTWARE.
-*/
-/// https://github.com/RealTimeChris/benchmarksuite
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Nihilai Collective Corp
+ * https://github.com/nihilai-collective/benchmarksuite
+ * cmake/detection/main.cpp
+ */
 
 #if defined(BNCH_SWT_DETECT_GPU_PROPERTIES)
 	#include <cuda_runtime.h>
 	#include <iostream>
 	#include <cstdint>
 
-int get_cores_per_sm(int major, int minor) {
+int32_t get_cores_per_sm(int32_t major, int32_t minor) {
 	if (major == 7)
 		return 64;
 	if (major >= 8)
@@ -34,7 +18,7 @@ int get_cores_per_sm(int major, int minor) {
 	return 128;
 }
 
-int main() {
+int32_t main() {
 	cudaDeviceProp deviceProp;
 	if (cudaGetDeviceProperties(&deviceProp, 0) != cudaSuccess) {
 		std::cout << "CUDA_ERROR=1" << std::endl;
@@ -45,7 +29,7 @@ int main() {
 	double bus_width_bytes			  = static_cast<double>(deviceProp.memoryBusWidth) / 8.0;
 	long long bandwidth_bytes_per_sec = static_cast<long long>(mem_clock_hz * bus_width_bytes * 2.0);
 
-	int cores_per_sm				 = get_cores_per_sm(deviceProp.major, deviceProp.minor);
+	int32_t cores_per_sm				 = get_cores_per_sm(deviceProp.major, deviceProp.minor);
 	double core_clock_hz			 = static_cast<double>(deviceProp.clockRate) * 1000.0;
 	double total_flops				 = static_cast<double>(deviceProp.multiProcessorCount) * cores_per_sm * core_clock_hz * 2.0;
 	long long flops_as_bytes_per_sec = static_cast<long long>(total_flops * 4.0);
@@ -73,7 +57,7 @@ int main() {
 	std::cout << "L2_CACHE_SIZE=" << deviceProp.l2CacheSize << std::endl;
 	std::cout << "SHARED_MEM_PER_BLOCK=" << deviceProp.sharedMemPerBlock << std::endl;
 	std::cout << "MEMORY_BUS_WIDTH=" << deviceProp.memoryBusWidth << std::endl;
-	int clock_rate;
+	int32_t clock_rate;
 	cudaDeviceGetAttribute(&clock_rate, cudaDevAttrClockRate, 0);
 	std::cout << "MEMORY_CLOCK_RATE=" << clock_rate << std::endl;
 	std::cout << "MAJOR_COMPUTE_CAPABILITY=" << deviceProp.major << std::endl;
@@ -304,7 +288,7 @@ enum class host_cxx_compilers {
 	msvc,
 };
 
-int main() {
+int32_t main() {
 	const uint32_t thread_count	 = std::thread::hardware_concurrency();
 	const uint32_t supported_isa = detect_supported_architectures();
 	const uint64_t l1_cache_size = get_cache_size(cache_level::one);
@@ -334,7 +318,7 @@ int main() {
 	return 0;
 }
 #else
-int main() {
+int32_t main() {
 	return -1;
 }
 #endif
