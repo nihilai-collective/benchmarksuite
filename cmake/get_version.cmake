@@ -1,13 +1,15 @@
-# get_version.cmake - Script for collecting the current version of the library.
-# MIT License
-# Copyright (c) 2026 RealTimeChris
+# MIT License @ /License.md
+# Copyright (c) 2026 Nihilai Collective Corp
+# https://github.com/nihilai-collective/benchmarksuite
+# cmake/detection/get_version.cmake
+
 set(auth_header "")
 if(DEFINED ENV{GITHUB_TOKEN})
     set(auth_header "Authorization: Bearer $ENV{GITHUB_TOKEN}")
 endif()
 
 file(DOWNLOAD 
-    "https://api.github.com/repos/realtimechris/benchmarksuite/releases/latest" 
+    "https://api.github.com/repos/nihilai-collective/benchmarksuite/releases/latest" 
     "${CMAKE_CURRENT_BINARY_DIR}/benchmarksuite_latest.json"
     HTTPHEADER "User-Agent: CMake-Fetch-Script"
     HTTPHEADER "${auth_header}"

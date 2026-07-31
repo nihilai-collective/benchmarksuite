@@ -1,0 +1,6 @@
+// MIT License @ /License.md
+// Copyright (c) 2026 Nihilai Collective Corp
+// https://github.com/nihilai-collective/benchmarksuite
+// include/benchmarksuite
+
+#include <benchmarksuite-incl/index.hpp>

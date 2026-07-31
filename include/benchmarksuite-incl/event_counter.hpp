@@ -1,38 +1,18 @@
-// bnch_swt-incl/event_counter.hpp
-/*
-	MIT License
-
-	Copyright (c) 2024 RealTimeChris
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this
-	software and associated documentation files (the "Software"), to deal in the Software
-	without restriction, including without limitation the rights to use, copy, modify, merge,
-	publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-	persons to whom the Software is furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all copies or
-	substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-	DEALINGS IN THE SOFTWARE.
-*/
-/// https://github.com/RealTimeChris/benchmarksuite
+// MIT License @ /License.md
+// Copyright (c) 2026 Nihilai Collective Corp
+// https://github.com/nihilai-collective/benchmarksuite
+// include/benchmarksuite-incl/event_counter.hpp
 
 #pragma once
 
-#include <bnch_swt-incl/config.hpp>
-#include <bnch_swt-incl/counters/apple_arm_perf_events.hpp>
-#include <bnch_swt-incl/counters/windows_perf_events.hpp>
-#include <bnch_swt-incl/counters/linux_perf_events.hpp>
-#include <bnch_swt-incl/counters/cuda_perf_events.hpp>
-#include <optional>
-#include <chrono>
+#include <benchmarksuite-incl/config.hpp>
+#include <benchmarksuite-incl/counters/apple_arm_perf_events.hpp>
+#include <benchmarksuite-incl/counters/windows_perf_events.hpp>
+#include <benchmarksuite-incl/counters/linux_perf_events.hpp>
+#include <benchmarksuite-incl/counters/cuda_perf_events.hpp>
+#include <benchmarksuite-incl/counters/android_perf_events.hpp>
 
-namespace bnch_swt::internal {
+namespace benchmarksuite::internal {
 
 	template<benchmark_types benchmark_type> struct event_count;
 

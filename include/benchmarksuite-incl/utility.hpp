@@ -1,0 +1,92 @@
+// MIT License @ /License.md
+// Copyright (c) 2026 Nihilai Collective Corp
+// https://github.com/nihilai-collective/benchmarksuite
+// include/benchmarksuite-incl/utility.hpp
+
+#pragma once
+
+#include <benchmarksuite-incl/concepts.hpp>
+
+namespace benchmarksuite {
+
+	[[maybe_unused]] BNCH_SWT_HOST static std::string get_time() {
+		std::string new_time_string{};
+		new_time_string.resize(1024);
+#if BNCH_SWT_PLATFORM_WINDOWS
+		std::time_t result = std::time(nullptr);
+		std::tm result_two{};
+		localtime_s(&result_two, &result);
+#else
+		std::time_t result = std::time(nullptr);
+		std::tm result_two{ *localtime(&result) };
+#endif
+		new_time_string.resize(strftime(new_time_string.data(), 1024, "%b %d, %Y", &result_two));
+		return new_time_string;
+	}
+
+	[[maybe_unused]] BNCH_SWT_HOST static std::string url_encode(std::string_view value) {
+		std::ostringstream escaped;
+		escaped.fill('0');
+		escaped << std::hex;
+
+		for (char c: value) {
+			if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+				escaped << c;
+			} else if (c == ':') {
+				escaped << '%' << std::setw(2) << static_cast<int32_t>(static_cast<unsigned char>(' '));
+			} else {
+				escaped << '%' << std::setw(2) << static_cast<int32_t>(static_cast<unsigned char>(c));
+			}
+		}
+
+		return escaped.str();
+	}
+
+	static constexpr decltype(auto) current_path{ [] {
+		constexpr string_literal os_id{ internal::string_literal_from_view<benchmarksuite::system_info_data<benchmarksuite::benchmark_types::cpu>::os_id.size()>(
+			benchmarksuite::system_info_data<benchmarksuite::benchmark_types::cpu>::os_id) };
+		constexpr string_literal compiler_id{ internal::string_literal_from_view<benchmarksuite::system_info_data<benchmarksuite::benchmark_types::cpu>::compiler_id.size()>(
+			benchmarksuite::system_info_data<benchmarksuite::benchmark_types::cpu>::compiler_id) };
+		return os_id + "-" + compiler_id;
+	}() };
+
+	[[maybe_unused]] BNCH_SWT_HOST static constexpr decltype(current_path) get_current_path_impl() {
+		return current_path;
+	}
+
+	[[maybe_unused]] BNCH_SWT_HOST static int32_t execute_python_script(std::string_view script_path, std::string_view argument_01, std::string_view argument_02) {
+#if BNCH_SWT_PLATFORM_WINDOWS
+		static constexpr std::string_view python_name{ "python" };
+#else
+		static constexpr std::string_view python_name{ "python3" };
+#endif
+		auto quote = [](std::string_view s) {
+			std::string out{ "\"" };
+			for (char c: s) {
+				if (c == '"' || c == '\\') {
+					out += '\\';
+				}
+				out += c;
+			}
+			out += '"';
+			return out;
+		};
+		std::string command{ python_name };
+		command += ' ';
+		command += quote(script_path);
+		command += ' ';
+		command += quote(argument_01);
+		command += ' ';
+		command += quote(argument_02);
+		int32_t raw_result = system(command.c_str());
+#if BNCH_SWT_PLATFORM_WINDOWS
+		int32_t exit_code = raw_result;
+#else
+		int32_t exit_code = (raw_result == -1) ? -1 : (WIFEXITED(raw_result) ? WEXITSTATUS(raw_result) : 128 + WTERMSIG(raw_result));
+#endif
+		if (exit_code != 0) {
+			std::cout << "Error: Failed to execute Python script. Command exited with code " << exit_code << std::endl;
+		}
+		return exit_code;
+	}
+}

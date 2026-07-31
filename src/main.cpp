@@ -1,26 +1,14 @@
-/*
-	MIT License
-	Copyright (c) 2024 RealTimeChris
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this
-	software and associated documentation files (the "Software"), to deal in the Software
-	without restriction, including without limitation the rights to use, copy, modify, merge,
-	publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-	persons to whom the Software is furnished to do so, subject to the following conditions:
-	The above copyright notice and this permission notice shall be included in all copies or
-	substantial portions of the Software.
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-	DEALINGS IN THE SOFTWARE.
-*/
-#include <bnch_swt>
+// MIT License @ /License.md
+// Copyright (c) 2026 Nihilai Collective Corp
+// https://github.com/nihilai-collective/benchmarksuite
+// src/main.cpp
+
+#include <benchmarksuite>
 #include <source_location>
 #include <atomic>
 #include <thread>
 
-using namespace bnch_swt;
+using namespace benchmarksuite;
 
 static constexpr uint64_t wait_notify_cycles{ 1000 };
 
@@ -33,7 +21,7 @@ struct test_atomic_uint64 {
 				uint64_t expected = i;
 				++value;
 				flag.wait(expected);
-				bnch_swt::do_not_optimize_away(value);
+				benchmarksuite::do_not_optimize_away(value);
 			}
 			//std::this_thread::sleep_for(std::chrono::microseconds{ rand() % 1000 });
 		});
@@ -42,7 +30,7 @@ struct test_atomic_uint64 {
 			flag.store(i, std::memory_order_release);
 			flag.notify_one();
 			value = flag.load();
-			bnch_swt::do_not_optimize_away(value);
+			benchmarksuite::do_not_optimize_away(value);
 		}
 		waiter.join();
 		return 20000;
@@ -58,7 +46,7 @@ struct test_atomic_signed_lock_free {
 				typename std::atomic_unsigned_lock_free::value_type expected = i;
 				++value;
 				flag.wait(expected);
-				bnch_swt::do_not_optimize_away(value);
+				benchmarksuite::do_not_optimize_away(value);
 			}
 		});
 		typename std::atomic_unsigned_lock_free::value_type value{};
@@ -66,7 +54,7 @@ struct test_atomic_signed_lock_free {
 			flag.store(i, std::memory_order_release);
 			flag.notify_one();
 			value = flag.load();
-			bnch_swt::do_not_optimize_away(value);
+			benchmarksuite::do_not_optimize_away(value);
 		}
 		waiter.join();
 		return 20000;
@@ -80,7 +68,7 @@ template<typename function_type> void test_function() {
 
 int main() {
 	using stage_type = benchmark_stage<"test_stage_01", stage_config_data{}>;
-	bnch_swt::pin_for_benchmark();
+	benchmarksuite::pin_for_benchmark();
 	stage_type ::run_benchmark<"test-test", "test_atomic_signed_lock_free", test_atomic_signed_lock_free>();
 	stage_type ::run_benchmark<"test-test", "test_atomic_uint64", test_atomic_uint64::impl>();
 	auto test_rankings = stage_type::get_test_results("test-test");

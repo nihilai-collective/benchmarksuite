@@ -1,26 +1,9 @@
-/*
-	MIT License
+// MIT License @ /License.md
+// Copyright (c) 2026 Nihilai Collective Corp
+// https://github.com/nihilai-collective/benchmarksuite
+// unit-tests/main.cu
 
-	Copyright (c) 2024 RealTimeChris
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this
-	software and associated documentation files (the "Software"), to deal in the Software
-	without restriction, including without limitation the rights to use, copy, modify, merge,
-	publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-	persons to whom the Software is furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all copies or
-	substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-	DEALINGS IN THE SOFTWARE.
-*/
-/// https://github.com/RealTimeChris/BenchmarkSuite
-#include <bnch_swt>
+#include <benchmarksuite>
 #include <source_location>
 #include <cuda_runtime.h>
 #include <vector>
@@ -129,8 +112,8 @@ template<uint64_types value_type> BNCH_SWT_HOST constexpr value_type lzcnt(const
 
 template<uint_types value_type> struct BNCH_SWT_ALIGN(16) uint_pair {
 	template<uint_types value_type_new> friend struct div_mod_logic_new;
-	bnch_swt::aligned_const<value_type, (sizeof(value_type) * 2) % 16> multiplicand;
-	bnch_swt::aligned_const<value_type, (sizeof(value_type) * 2) % 16> shift;
+	benchmarksuite::aligned_const<value_type, (sizeof(value_type) * 2) % 16> multiplicand;
+	benchmarksuite::aligned_const<value_type, (sizeof(value_type) * 2) % 16> shift;
 
 	using signed_type = std::make_signed_t<value_type>;
 	static constexpr signed_type single_bits{ static_cast<signed_type>(sizeof(value_type) * 8) };
@@ -269,12 +252,12 @@ template<typename value_type> BNCH_SWT_HOST_DEVICE consteval value_type log2_ct(
 	return result;
 }
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(bnch_swt::device_alignment) aligned_uint_new {
+template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) aligned_uint_new {
   protected:
-	bnch_swt::aligned_const<value_type, bnch_swt::device_alignment> value;
+	benchmarksuite::aligned_const<value_type, benchmarksuite::device_alignment> value;
 };
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(bnch_swt::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
+template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
 	BNCH_SWT_HOST constexpr value_type get_value() const noexcept {
 		return aligned_uint_new<value_type>::value.value;
 	}
@@ -542,11 +525,11 @@ template<typename bench, uint64_t TEST_DIVISOR> void test_function() {
 }
 
 int main() {
-	static constexpr bnch_swt::stage_config stage_config_data{ .max_execution_count = total_executions,
+	static constexpr benchmarksuite::stage_config stage_config_data{ .max_execution_count = total_executions,
 		.measured_execution_count													= measured_executions,
-		.benchmark_type																= bnch_swt::benchmark_types::cuda,
+		.benchmark_type																= benchmarksuite::benchmark_types::cuda,
 		.max_time_seconds															= 1 };
-	using bench = bnch_swt::benchmark_stage<"native-vs-magic-division", stage_config_data>;
+	using bench = benchmarksuite::benchmark_stage<"native-vs-magic-division", stage_config_data>;
 	test_function<bench, 32>();
 	test_function<bench, 64>();
 	test_function<bench, 256>();
