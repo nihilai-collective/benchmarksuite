@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: MIT
  * Copyright (c) 2026 Nihilai Collective Corp
  * https://github.com/nihilai-collective/benchmarksuite
- * include/benchmarksuite-incl/random_generator.hpp
+ * include/benchmarksuite-incl/random_generators.hpp
  */
 
 #pragma once

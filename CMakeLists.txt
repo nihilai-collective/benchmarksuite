@@ -6,8 +6,6 @@
 cmake_minimum_required(VERSION 3.28)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
-option(BNCH_SWT_DETECT_CPU_PROPERTIES "Override cpu-cache-size selection" OFF)
-option(BNCH_SWT_DETECT_GPU_PROPERTIES "Override cuda-cache-size selection" OFF)
 option(BNCH_SWT_CUDA "Enable CUDA support" OFF)
 
 include(cmake/get_version.cmake)
@@ -20,8 +18,6 @@ if(BNCH_SWT_CUDA)
         LANGUAGES CUDA 
     )
     find_package(CUDAToolkit REQUIRED COMPONENTS cudart)
-    include(cmake/detection/benchmarksuite_detect_gpu_properties.cmake)
-    set(CMAKE_CUDA_ARCHITECTURES ${BNCH_SWT_MAJOR_COMPUTE_CAPABILITY}${BNCH_SWT_MINOR_COMPUTE_CAPABILITY} CACHE STRING "Cuda architectures." FORCE)
     set(BNCH_SWT_MAIN_FILE_EXTENSION .cu)
     set(CMAKE_CUDA_STANDARD 20)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -37,7 +33,11 @@ else()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-include(cmake/detection/benchmarksuite_detect_cpu_properties.cmake)
+include(cmake/hardware_setup.cmake)
+
+if(BNCH_SWT_CUDA)
+    set(CMAKE_CUDA_ARCHITECTURES ${BNCH_SWT_CUDA_ARCHITECTURES} CACHE STRING "Cuda architectures." FORCE)
+endif()
 
 include(cmake/library_setup.cmake)
 

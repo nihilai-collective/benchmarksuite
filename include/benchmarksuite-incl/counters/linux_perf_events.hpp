@@ -157,13 +157,19 @@ namespace benchmarksuite::internal {
 		return static_cast<unsigned long>(a) | (static_cast<unsigned long>(d) << 32);
 	}
 
+	BNCH_SWT_HOST linux_events& get_thread_linux_events() {
+		static thread_local linux_events* linux_events_val{ new linux_events{} };
+		return *linux_events_val;
+	}
+
 	template<benchmark_types benchmark_types, typename function_type> struct iteration_metric_collector {
 		template<typename metric_type, typename... arg_types> BNCH_SWT_NOINLINE static void impl(metric_type& iteration_data, arg_types&&... args) {
-			[[maybe_unused]] linux_events linux_events_val{};
+			linux_events& linux_events_val = get_thread_linux_events();
 			if (linux_events_val.event_count() > 0) {
-				const auto start_clock = clock_type::now();
 				linux_events_val.start();
+				const auto start_clock		   = clock_type::now();
 				iteration_data.bytes_processed = static_cast<uint64_t>(function_type::impl(std::forward<arg_types>(args)...));
+				const auto end_clock		   = clock_type::now();
 				linux_events_val.end();
 				iteration_data.cycles				= linux_events_val.cycles_val;
 				iteration_data.instructions_val		= linux_events_val.instructions_val;
@@ -171,7 +177,6 @@ namespace benchmarksuite::internal {
 				iteration_data.branch_misses_val	= linux_events_val.branch_misses_val;
 				iteration_data.cache_references_val = linux_events_val.cache_references_val;
 				iteration_data.cache_misses_val		= linux_events_val.cache_misses_val;
-				const auto end_clock				= clock_type::now();
 				iteration_data.time_in_ns			= (end_clock - start_clock).count();
 			} else {
 				const auto start_clock				= clock_type::now();

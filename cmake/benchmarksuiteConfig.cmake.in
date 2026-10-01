@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Nihilai Collective Corp
 # https://github.com/nihilai-collective/benchmarksuite
-# cmake/detection/benchmarksuiteConfig.cmake.in
+# cmake/benchmarksuiteConfig.cmake.in
 
 @PACKAGE_INIT@
 

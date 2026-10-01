@@ -3,6 +3,3 @@ out/
 Build/
 build/
 
-cmake/detection/Build-Gpu-*
-cmake/detection/Build-Cpu-*
-cmake/detection/build_feature_tester_*

@@ -1,4 +1,4 @@
-<p align="center"><img src="./logo.png?raw=true" width="350"/></p>
+<p align="center"><img src="./Logo.png?raw=true" width="350"/></p>
 
 A header-only C++20 benchmarking library with cross-platform hardware performance counter integration, providing precise measurements of cycles, latency, and throughput with minimal overhead. Also supports CUDA GPU benchmarking.
 
@@ -26,10 +26,11 @@ A header-only C++20 benchmarking library with cross-platform hardware performanc
   - macOS: kperf/kpc private frameworks (Apple Silicon + Intel)
   - Linux: perf_event / rdtsc
   - Windows: rdtsc / __rdtsc intrinsic
+  - Android: perf_event
 - **CUDA GPU benchmarking** — cudaEvent timing, cooperative kernel launches, SM/clock introspection
 - **Adaptive convergence loop** — doubles the epoch size each pass until the time/iteration budget expires, then reports the epoch with the lowest combined RSE + mean-drift
 - **Statistical tie detection** — Welch's t-test with Welch-Satterthwaite degrees of freedom to distinguish real winners from noise, with rank sharing across tied libraries
-- **Cache eviction** — cache clearing between iterations for cold-start measurements, toggleable per stage
+- **Cache eviction** — one cache eviction before each `run_benchmark` call so every run starts from the same state, toggleable per stage
 - **Thread affinity + priority pinning** — pins to P-cores on Intel hybrid CPUs, raises to REALTIME/SCHED_FIFO/QOS_USER_INTERACTIVE
 - **Compile-time CPU/GPU property injection** — bakes cache sizes, alignment, SM count, etc. into the binary as constexpr
 - **Multi-format output** — Markdown tables and CSV, with system info preambles, both per-test and per-stage (win/tie/loss rollups)
@@ -43,8 +44,9 @@ A header-only C++20 benchmarking library with cross-platform hardware performanc
 - Supported platforms:
   - Windows x64 (MSVC, Clang, GCC)
   - Linux x64/ARM64 (GCC, Clang)
+  - Android (perf_event counter backend)
   - macOS x64/ARM64 (AppleClang, GCC via Homebrew)
-- Optional: CUDA toolkit for GPU benchmarks
+- Optional: CUDA toolkit for GPU benchmarks (enable with `-DBNCH_SWT_CUDA=ON`)
 
 ## Installation
 
@@ -120,11 +122,11 @@ bench::run_benchmark<"test-name", "library-name", +[](args...) -> uint64_t {
 }>(runtime_args...);
 ```
 
-**2. A functor type passed as a normal template argument**, invoked at runtime via a static `impl(metrics, args...)` method:
+**2. A functor type passed as a normal template argument**, invoked at runtime via a static `impl(args...)` method:
 
 ```cpp
 struct my_functor {
-    static uint64_t impl(benchmarksuite::iteration_metrics& metrics, std::vector<int32_t>& v) {
+    static uint64_t impl(std::vector<int32_t>& v) {
         std::sort(v.begin(), v.end());
         return v.size() * sizeof(int32_t);
     }
@@ -133,7 +135,7 @@ struct my_functor {
 bench::run_benchmark<"test-name", "library-name", my_functor>(my_vector);
 ```
 
-Use the NTTP lambda form for quick one-off inline benchmarks. Use the functor form when the benchmark body needs to be reused, is non-trivial, or needs direct access to `iteration_metrics`.
+Use the NTTP lambda form for quick one-off inline benchmarks. Use the functor form when the benchmark body needs to be reused, is non-trivial, or needs per-iteration setup via `before`.
 
 ### Per-Iteration Setup
 
@@ -235,7 +237,7 @@ Note the two registration styles side by side: `test_atomic_signed_lock_free` is
 
 `stage_config_data` controls the adaptive benchmarking loop:
 
-- `clear_cpu_caches_before_iterations` — cache eviction between runs (default `true`)
+- `clear_cpu_caches_before_iterations` — evict CPU caches once before each `run_benchmark` call (default `true`)
 - `measured_iteration_count` — initial epoch size (default 100)
 - `max_iteration_count` — hard ceiling on total iterations, also sizes the preallocated metrics buffer (default 1000)
 - `convergence_threshold` — mean-stability threshold between epochs, as a percentage (default 1.0)
@@ -260,7 +262,9 @@ for (const auto& test : stage_results.results) {
 stage_results.to_csv("./output_dir");
 ```
 
-Per-test output includes throughput (MB/s), RSE %, window duration, bytes processed, sample size, variance, latency, cycles/byte (when hardware counters are available), and Win/Tie/Loss position. Stage-level CSV rolls this up into win/tie/loss counts per library across all tests in the stage, alongside the stage config used to produce them.
+`get_test_results("test-name")` returns the ranked results for a single test, and `get_finished_tests()` returns only the tests that converged.
+
+Per-test output includes throughput (MB/s), RSE %, window duration, bytes processed, sample size, variance, latency, per-byte hardware counters when available (cycles, instructions, branches, branch misses, cache references, cache misses), and Win/Tie/Loss position. Stage-level CSV rolls this up into win/tie/loss counts per library across all tests in the stage, alongside the stage config used to produce them.
 
 ## CUDA Support
 
@@ -277,7 +281,9 @@ Set `benchmark_type = benchmarksuite::benchmark_types::cuda` and use the CUDA-sp
 
 The unit-tests CMake exposes `BNCH_SWT_ASAN` and `BNCH_SWT_UBSAN` options. Note: UBSan has no MSVC equivalent, and GCC-on-macOS sanitizer combos are auto-disabled since they don't work.
 
-Unit tests are built on [rt-ut](https://github.com/nihilai-collective/rt-ut)
+## Testing
+
+The unit tests use [rt-ut](https://github.com/nihilai-collective/rt-ut), our header-only C++20 unit testing framework. CMake fetches it automatically through `FetchContent` when the unit tests are built, so there is nothing to install.
 
 ## License
 

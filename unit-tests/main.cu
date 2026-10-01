@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: MIT
  * Copyright (c) 2026 Nihilai Collective Corp
  * https://github.com/nihilai-collective/benchmarksuite
- * uint-tests/main.cu
+ * unit-tests/main.cu
  */
 
 #include <benchmarksuite>
