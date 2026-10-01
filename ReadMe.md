@@ -26,10 +26,11 @@ A header-only C++20 benchmarking library with cross-platform hardware performanc
   - macOS: kperf/kpc private frameworks (Apple Silicon + Intel)
   - Linux: perf_event / rdtsc
   - Windows: rdtsc / __rdtsc intrinsic
+  - Android: perf_event
 - **CUDA GPU benchmarking** — cudaEvent timing, cooperative kernel launches, SM/clock introspection
 - **Adaptive convergence loop** — doubles the epoch size each pass until the time/iteration budget expires, then reports the epoch with the lowest combined RSE + mean-drift
 - **Statistical tie detection** — Welch's t-test with Welch-Satterthwaite degrees of freedom to distinguish real winners from noise, with rank sharing across tied libraries
-- **Cache eviction** — cache clearing between iterations for cold-start measurements, toggleable per stage
+- **Cache eviction** — one cache eviction before each `run_benchmark` call so every run starts from the same state, toggleable per stage
 - **Thread affinity + priority pinning** — pins to P-cores on Intel hybrid CPUs, raises to REALTIME/SCHED_FIFO/QOS_USER_INTERACTIVE
 - **Compile-time CPU/GPU property injection** — bakes cache sizes, alignment, SM count, etc. into the binary as constexpr
 - **Multi-format output** — Markdown tables and CSV, with system info preambles, both per-test and per-stage (win/tie/loss rollups)
@@ -43,6 +44,7 @@ A header-only C++20 benchmarking library with cross-platform hardware performanc
 - Supported platforms:
   - Windows x64 (MSVC, Clang, GCC)
   - Linux x64/ARM64 (GCC, Clang)
+  - Android (perf_event counter backend)
   - macOS x64/ARM64 (AppleClang, GCC via Homebrew)
 - Optional: CUDA toolkit for GPU benchmarks
 
@@ -235,7 +237,7 @@ Note the two registration styles side by side: `test_atomic_signed_lock_free` is
 
 `stage_config_data` controls the adaptive benchmarking loop:
 
-- `clear_cpu_caches_before_iterations` — cache eviction between runs (default `true`)
+- `clear_cpu_caches_before_iterations` — evict CPU caches once before each `run_benchmark` call (default `true`)
 - `measured_iteration_count` — initial epoch size (default 100)
 - `max_iteration_count` — hard ceiling on total iterations, also sizes the preallocated metrics buffer (default 1000)
 - `convergence_threshold` — mean-stability threshold between epochs, as a percentage (default 1.0)
@@ -277,7 +279,9 @@ Set `benchmark_type = benchmarksuite::benchmark_types::cuda` and use the CUDA-sp
 
 The unit-tests CMake exposes `BNCH_SWT_ASAN` and `BNCH_SWT_UBSAN` options. Note: UBSan has no MSVC equivalent, and GCC-on-macOS sanitizer combos are auto-disabled since they don't work.
 
-Unit tests are built on [rt-ut](https://github.com/nihilai-collective/rt-ut)
+## Testing
+
+The unit tests use [rt-ut](https://github.com/nihilai-collective/rt-ut), our header-only C++20 unit testing framework. CMake fetches it automatically through `FetchContent` when the unit tests are built, so there is nothing to install.
 
 ## License
 

@@ -2,7 +2,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO nihilai-collective/benchmarksuite
     REF "v${VERSION}"
-    SHA512 8fd2254289952d2f9a1697cde1f3ee7b278ad5e00a38c49a0f114d311e504deed9d05b2b482aa05d3d6f1289e27477b107cb83b969bdf7dfa0cb04c0b6649c1c
+    SHA512 caf0fb107885a721505cb2a6fe7c71f688ee7959b0ffe6b73a6fdddc5d9b0aad40c97b26f0008f530e1fcbe69b9cb1ae61dfd76734574dc90f14eb20be74ca68
     HEAD_REF main
 )
 

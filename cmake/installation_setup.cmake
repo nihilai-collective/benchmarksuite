@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Nihilai Collective Corp
 # https://github.com/nihilai-collective/benchmarksuite
-# cmake/detection/installation_setup.cmake
+# cmake/installation_setup.cmake
 
 set(CONFIG_FILE_NAME ${PROJECT_NAME}Config.cmake)
 set(EXPORTED_TARGETS_NAME ${PROJECT_NAME}Targets)
@@ -39,7 +39,7 @@ install(
 )
 
 install(
-	TARGETS ${PROJECT_NAME}
+	TARGETS ${PROJECT_NAME} voided_hw_bnch_swt_cpu
 	EXPORT ${EXPORTED_TARGETS_NAME}
 )
 

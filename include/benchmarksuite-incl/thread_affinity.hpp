@@ -172,9 +172,16 @@ namespace benchmarksuite {
 			return -1;
 		}
 
+		cpu_set_t original;
+		CPU_ZERO(&original);
+		pthread_getaffinity_np(pthread_self(), sizeof(original), &original);
+
 		int32_t best_cpu = -1;
 		long best_freq	 = -1;
 		for (long i = 0; i < ncpu; ++i) {
+			if (!CPU_ISSET(static_cast<int32_t>(i), &original)) {
+				continue;
+			}
 			const long freq = read_cpu_max_freq_khz(static_cast<int32_t>(i));
 			if (freq > best_freq) {
 				best_freq = freq;
@@ -208,6 +215,9 @@ namespace benchmarksuite {
 
 		int32_t found = -1;
 		for (long i = 0; i < ncpu; ++i) {
+			if (!CPU_ISSET(static_cast<int32_t>(i), &original)) {
+				continue;
+			}
 			cpu_set_t one;
 			CPU_ZERO(&one);
 			CPU_SET(static_cast<int32_t>(i), &one);

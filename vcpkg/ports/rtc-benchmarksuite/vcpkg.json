@@ -1,6 +1,6 @@
 {
   "name": "rtc-benchmarksuite",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A header-only C++ benchmarking library with cross-platform hardware performance counter integration, providing precise measurements of cycles, instructions, branches, cache behavior, and throughput with minimal overhead.",
   "homepage": "https://github.com/nihilai-collective/benchmarksuite",
   "license": "MIT",

@@ -934,7 +934,7 @@ namespace benchmarksuite {
 			return process_test_rankings<stage_name_new, stage_config.benchmark_type>(*found);
 		}
 
-		BNCH_SWT_HOST static std::vector<final_test_results<stage_config.benchmark_type>> get_finished_tests() {
+		inline static std::vector<final_test_results<stage_config.benchmark_type>> get_finished_tests() {
 			std::vector<final_test_results<stage_config.benchmark_type>> return_values{};
 			const auto& results = get_raw_test_data().results;
 			return_values.reserve(results.size());

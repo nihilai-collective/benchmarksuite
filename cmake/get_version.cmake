@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Nihilai Collective Corp
 # https://github.com/nihilai-collective/benchmarksuite
-# cmake/detection/get_version.cmake
+# cmake/get_version.cmake
 
 set(auth_header "")
 if(DEFINED ENV{GITHUB_TOKEN})
