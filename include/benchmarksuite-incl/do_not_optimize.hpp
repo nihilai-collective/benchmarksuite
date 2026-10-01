@@ -1,31 +1,15 @@
 /*
-	MIT License
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Nihilai Collective Corp
+ * https://github.com/nihilai-collective/benchmarksuite
+ * include/benchmarksuite-incl/do_not_optimize.hpp
+ */
 
-	Copyright (c) 2024 RealTimeChris
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this
-	software and associated documentation files (the "Software"), to deal in the Software
-	without restriction, including without limitation the rights to use, copy, modify, merge,
-	publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-	persons to whom the Software is furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all copies or
-	substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-	DEALINGS IN THE SOFTWARE.
-*/
-/// https://github.com/RealTimeChris/benchmarksuite
-/// Sep 1, 2024
 #pragma once
 
-#include <bnch_swt-incl/config.hpp>
+#include <benchmarksuite-incl/config.hpp>
 
-namespace bnch_swt::internal {
+namespace benchmarksuite::internal {
 
 	template<typename value_type, typename... arg_types>
 	concept invocable = std::is_invocable_v<base_t<value_type>, arg_types...>;
@@ -45,13 +29,13 @@ namespace bnch_swt::internal {
 	template<typename value_type>
 	concept large_or_non_trivially_copyable = !std::is_trivially_copyable_v<value_type> || (sizeof(value_type) > sizeof(value_type*));
 
-#if BNCH_SWT_COMPILER_MSVC
-
 	[[maybe_unused]] inline void const volatile* volatile global_force_escape_pointer;
 
 	[[maybe_unused]] BNCH_SWT_HOST static void use_char_pointer(void const volatile* const v) {
 		global_force_escape_pointer = v;
 	}
+
+#if BNCH_SWT_COMPILER_MSVC
 
 	template<typename value_type> [[maybe_unused]] BNCH_SWT_HOST static void do_not_optimize_impl(value_type const& value) {
 		use_char_pointer(static_cast<void const volatile* const>(&value));
@@ -90,7 +74,7 @@ namespace bnch_swt::internal {
 	}
 #else
 
-	template<class value_type> static inline [[maybe_unused]] BNCH_SWT_HOST static void do_not_optimize_impl(value_type&& value) {
+	template<class value_type> [[maybe_unused]] BNCH_SWT_HOST static void do_not_optimize_impl(value_type&& value) {
 		internal::use_char_pointer(&std::bit_cast<char const volatile&>(value));
 	}
 
@@ -105,7 +89,7 @@ namespace bnch_swt::internal {
 	}
 }
 
-namespace bnch_swt {	
+namespace benchmarksuite {
 
 	template<internal::not_invocable value_type> [[maybe_unused]] BNCH_SWT_HOST static void do_not_optimize_away(value_type&& value) {
 		internal::do_not_optimize_impl(value);
