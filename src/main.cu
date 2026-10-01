@@ -6,28 +6,10 @@
  */
 
 #include <benchmarksuite>
-#include <source_location>
 #include <cuda_runtime.h>
 #include <vector>
 #include <iostream>
-#include <iomanip>
 #include <cstddef>
-#include <string_view>
-
-#ifndef BNCH_SWT_ALIGN
-	#define BNCH_SWT_ALIGN(alignment) alignas(alignment)
-#endif
-#ifndef BNCH_SWT_HOST
-	#define BNCH_SWT_HOST __forceinline__ __host__
-#endif
-#ifndef BNCH_SWT_DEVICE
-	#define BNCH_SWT_DEVICE __forceinline__ __device__
-#endif
-#ifndef BNCH_SWT_HOST_DEVICE
-	#define BNCH_SWT_HOST_DEVICE __forceinline__ __host__ __device__
-#endif
-
-template<typename value_type, value_type...> struct uint_type;
 
 template<typename value_type>
 concept uint64_types = std::is_integral_v<value_type> && sizeof(value_type) == 8;
@@ -229,10 +211,6 @@ template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_ali
 };
 
 template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
-	BNCH_SWT_HOST constexpr value_type get_value() const noexcept {
-		return aligned_uint_new<value_type>::value.value;
-	}
-
 	BNCH_SWT_HOST_DEVICE static constexpr auto collect_values(value_type d) noexcept {
 		div_mod_logic_new return_value{};
 		return_value.value.emplace(d);
@@ -242,10 +220,6 @@ template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_ali
 
 	template<uint_types other_type> BNCH_SWT_HOST_DEVICE friend value_type operator/(const other_type& lhs, const div_mod_logic_new& rhs) noexcept {
 		return rhs.div(lhs);
-	}
-
-	template<uint_types other_type> BNCH_SWT_HOST_DEVICE friend value_type operator%(const other_type& lhs, const div_mod_logic_new& rhs) noexcept {
-		return rhs.mod(lhs);
 	}
 
   protected:
@@ -259,10 +233,6 @@ template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_ali
 		uint64_t high_part = host_umulhi(uint_pair<value_type>::multiplicand.value, val);
 		return high_part >> (uint_pair<value_type>::shift - (sizeof(value_type) * 8));
 #endif
-	}
-
-	BNCH_SWT_HOST_DEVICE value_type mod(value_type val) const noexcept {
-		return val - (div(val) * aligned_uint_new<value_type>::value.value);
 	}
 };
 
@@ -278,23 +248,12 @@ template<typename value_type, value_type static_divisor> struct division {
 	}
 };
 
-template<typename value_type, value_type static_divisor> struct modulo {
-	BNCH_SWT_DEVICE static value_type mod(value_type value) {
-		if constexpr (is_power_of_2(static_divisor)) {
-			return value & (static_divisor - 1ULL);
-		} else {
-			static constexpr div_mod_logic_new<value_type> mul_shift{ div_mod_logic_new<value_type>::collect_values(static_divisor) };
-			return value % mul_shift;
-		}
-	}
-};
-
 constexpr uint64_t total_executions	   = 4000;
 constexpr uint64_t measured_executions = 40;
 constexpr size_t N_ELEMENTS			   = 4096ULL * 256ULL;
 
-template<typename value_type> void prepare_data(std::vector<value_type>& host_input, value_type*& d_input, value_type*& d_output_native, value_type*& d_output_magic,
-	value_type*& d_execution_counter, size_t n, size_t total_executions) {
+template<typename value_type>
+void prepare_data(std::vector<value_type>& host_input, value_type*& d_input, value_type*& d_output_native, value_type*& d_output_magic, size_t n, size_t total_executions) {
 	size_t total_elements = n * total_executions;
 	host_input.resize(total_elements);
 	for (value_type iter = 0; iter < total_executions; ++iter) {
@@ -305,17 +264,13 @@ template<typename value_type> void prepare_data(std::vector<value_type>& host_in
 	cudaMalloc(&d_input, total_elements * sizeof(value_type));
 	cudaMalloc(&d_output_native, n * sizeof(value_type));
 	cudaMalloc(&d_output_magic, n * sizeof(value_type));
-	cudaMalloc(&d_execution_counter, sizeof(value_type));
 	cudaMemcpy(d_input, host_input.data(), total_elements * sizeof(value_type), cudaMemcpyHostToDevice);
-	value_type initial_counter = 0;
-	cudaMemcpy(d_execution_counter, &initial_counter, sizeof(value_type), cudaMemcpyHostToDevice);
 }
 
-template<typename value_type> void cleanup(value_type* d_input, value_type* d_output_native, value_type* d_output_magic, value_type* d_execution_counter) {
+template<typename value_type> void cleanup(value_type* d_input, value_type* d_output_native, value_type* d_output_magic) {
 	cudaFree(d_input);
 	cudaFree(d_output_native);
 	cudaFree(d_output_magic);
-	cudaFree(d_execution_counter);
 }
 
 template<typename value_type> __constant__ div_mod_logic_new<value_type> magic_new;
@@ -360,10 +315,6 @@ template<uint64_t divisor, typename value_type> __global__ void magic_div_kernel
 		output[idx] += division<value_type, divisor>::div(input[idx]);
 	}
 }
-
-// The CUDA iteration_metric_collector calls function_type::impl(args...) directly with
-// no metrics parameter prepended — it takes the return value as bytes_processed. So these
-// launchers take exactly the runtime args passed to run_benchmark, nothing more.
 
 template<uint64_t TEST_DIVISOR, typename value_type> struct native_div_launcher {
 	static inline size_t current_iter = 0;
@@ -413,8 +364,8 @@ template<typename bench, uint64_t TEST_DIVISOR> void test_function() {
 
 	{
 		std::vector<uint64_t> host_input;
-		uint64_t *d_input = nullptr, *d_output_native = nullptr, *d_output_magic = nullptr, *d_execution_counter = nullptr;
-		prepare_data(host_input, d_input, d_output_native, d_output_magic, d_execution_counter, N_ELEMENTS, total_executions);
+		uint64_t *d_input = nullptr, *d_output_native = nullptr, *d_output_magic = nullptr;
+		prepare_data(host_input, d_input, d_output_native, d_output_magic, N_ELEMENTS, total_executions);
 		using MagicType = div_mod_logic_new<uint64_t>;
 		MagicType magic_div{ div_mod_logic_new<uint64_t>::collect_values(TEST_DIVISOR) };
 		cudaDeviceProp prop;
@@ -443,14 +394,14 @@ template<typename bench, uint64_t TEST_DIVISOR> void test_function() {
 		bench::template run_benchmark<"native-vs-granlund-montgomery-64-bit", "magic-division-ct", magic_div_ct_launcher<TEST_DIVISOR, uint64_t>>(grid, block, d_input,
 			d_output_magic, N_ELEMENTS);
 
-		cleanup(d_input, d_output_native, d_output_magic, d_execution_counter);
+		cleanup(d_input, d_output_native, d_output_magic);
 	}
 	std::cout << bench::get_test_results("native-vs-granlund-montgomery-64-bit").to_markdown();
 
 	{
 		std::vector<uint32_t> host_input;
-		uint32_t *d_input = nullptr, *d_output_native = nullptr, *d_output_magic = nullptr, *d_execution_counter = nullptr;
-		prepare_data(host_input, d_input, d_output_native, d_output_magic, d_execution_counter, N_ELEMENTS, total_executions);
+		uint32_t *d_input = nullptr, *d_output_native = nullptr, *d_output_magic = nullptr;
+		prepare_data(host_input, d_input, d_output_native, d_output_magic, N_ELEMENTS, total_executions);
 		using MagicType = div_mod_logic_new<uint32_t>;
 		MagicType magic_div{ div_mod_logic_new<uint32_t>::collect_values(TEST_DIVISOR) };
 		cudaDeviceProp prop;
@@ -479,7 +430,7 @@ template<typename bench, uint64_t TEST_DIVISOR> void test_function() {
 		bench::template run_benchmark<"native-vs-granlund-montgomery-32-bit", "magic-division-ct", magic_div_ct_launcher<TEST_DIVISOR, uint32_t>>(grid, block, d_input,
 			d_output_magic, N_ELEMENTS);
 
-		cleanup(d_input, d_output_native, d_output_magic, d_execution_counter);
+		cleanup(d_input, d_output_native, d_output_magic);
 	}
 	std::cout << bench::get_test_results("native-vs-granlund-montgomery-32-bit").to_markdown();
 

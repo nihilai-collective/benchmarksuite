@@ -6,8 +6,6 @@
  */
 
 #include <benchmarksuite>
-#include <source_location>
-#include <atomic>
 #include <thread>
 
 struct test_atomic_uint64 {

@@ -55,8 +55,6 @@ if (NOT BNCH_SWT_CUDA)
 
 endif()
 
-include(FetchContent)
-
 target_link_libraries(benchmarksuite-main PRIVATE benchmarksuite::benchmarksuite)
 
 set(BNCH_SWT_MSVC_COMPILER_OPTIONS

@@ -7,7 +7,12 @@
 
 #pragma once
 
-#include <benchmarksuite-incl/event_counter.hpp>
+#include <benchmarksuite-incl/config.hpp>
+#include <benchmarksuite-incl/counters/apple_arm_perf_events.hpp>
+#include <benchmarksuite-incl/counters/windows_perf_events.hpp>
+#include <benchmarksuite-incl/counters/linux_perf_events.hpp>
+#include <benchmarksuite-incl/counters/cuda_perf_events.hpp>
+#include <benchmarksuite-incl/counters/android_perf_events.hpp>
 
 namespace benchmarksuite {
 

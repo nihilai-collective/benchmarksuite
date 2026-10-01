@@ -14,7 +14,6 @@
 #include <benchmarksuite-incl/do_not_optimize.hpp>
 #include <benchmarksuite-incl/thread_affinity.hpp>
 #include <benchmarksuite-incl/string_literal.hpp>
-#include <benchmarksuite-incl/event_counter.hpp>
 #include <benchmarksuite-incl/cache_clearer.hpp>
 #include <benchmarksuite-incl/file_handle.hpp>
 #include <benchmarksuite-incl/printable.hpp>
