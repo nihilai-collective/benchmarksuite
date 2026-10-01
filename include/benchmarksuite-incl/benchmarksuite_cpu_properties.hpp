@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: MIT
  * Copyright (c) 2026 Nihilai Collective Corp
  * https://github.com/nihilai-collective/benchmarksuite
- * include/benchmarksuite-incl/benchmarksuite_cpu_properties.hpp
+ * cmake/detection/benchmarksuite_cpu_properties.hpp.in
  */
 
 #pragma once
