@@ -23,7 +23,7 @@ struct test_atomic_signed_lock_free {
 };
 
 int32_t main() {
-	using stage_type = benchmarksuite::benchmark_stage<"test_stage_01", benchmarksuite::stage_config_data{ .max_time_in_s = 10 }>;
+	using stage_type = benchmarksuite::benchmark_stage<"test_stage_01", benchmarksuite::stage_config_data{ .include_non_converged_results = true, .max_time_in_s = 10 }>;
 	benchmarksuite::pin_for_benchmark();
 	stage_type::run_benchmark<"test-test", "test_atomic_signed_lock_free", test_atomic_signed_lock_free>();
 	stage_type::run_benchmark<"test-test", "test_atomic_uint64", test_atomic_uint64::impl>();

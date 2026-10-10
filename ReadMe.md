@@ -1,23 +1,30 @@
 <p align="center"><img src="./Logo.png?raw=true" width="350"/></p>
 
-A header-only C++20 benchmarking library with cross-platform hardware performance counter integration, providing precise measurements of cycles, latency, and throughput with minimal overhead. Also supports CUDA GPU benchmarking.
+![Lines of Code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nihilai-collective/benchmarksuite/badges/loc.json&style=plastic)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=plastic)](License.md)
+[![C++](https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=plastic)](https://isocpp.org/)
+[![Header-only](https://img.shields.io/badge/header--only-yes-brightgreen.svg?style=plastic)](include/)
 
-### Compiler Support
-![MSVC](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=microsoft&logoColor=green&label=MSVC&labelColor=pewter&color=blue)
-![GCC](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=linux&logoColor=green&label=GCC&labelColor=pewter&color=blue)
-![CLANG](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=apple&logoColor=green&label=CLANG&labelColor=pewter&color=blue)
-![NVCC](https://img.shields.io/badge/NVCC-Supported-blue?style=plastic&logo=nvidia&logoColor=green&labelColor=pewter)
+---
+## Compiler Support
+![MSVC](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=microsoft&logoColor=green&label=MSVC&labelColor=pewter&color=blue&branch=main)
+![GCC](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=linux&logoColor=green&label=GCC&labelColor=pewter&color=blue&branch=main)
+![CLANG](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=apple&logoColor=green&label=CLANG&labelColor=pewter&color=blue&branch=main)
 
-### Operating System Support
-![Windows](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=microsoft&logoColor=green&label=Windows&labelColor=pewter&color=blue)
-![Linux](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=linux&logoColor=green&label=Linux&labelColor=pewter&color=blue)
-![Mac](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=apple&logoColor=green&label=MacOS&labelColor=pewter&color=blue)
+## Operating System Support
+![Windows](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=microsoft&logoColor=green&label=Windows&labelColor=pewter&color=blue&branch=main)
+![Linux](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=linux&logoColor=green&label=Linux&labelColor=pewter&color=blue&branch=main)
+![Mac](https://img.shields.io/github/actions/workflow/status/nihilai-collective/benchmarksuite/unit-tests.yml?style=plastic&logo=apple&logoColor=green&label=MacOS&labelColor=pewter&color=blue&branch=main)
 
 ---
 
+A header-only C++20 benchmarking library with cross-platform hardware performance counter integration, providing precise measurements of cycles, latency, and throughput with minimal overhead. Also supports CUDA GPU benchmarking.
+
 ## Used In
+- **[Nihilus](https://nihilai-collective.net/nihilus)**
 - **[Json-Performance](https://github.com/nihilai-collective/Json-Performance)** — JSON parsing/serialization benchmarks comparing Jsonifier, Glaze, and Simdjson.
 - **[rtc-digit-count](https://github.com/nihilai-collective/rtc-digit-count)** — Comparing the rtc-digit-count algorithm to the lemire algorithm.
+- **[StringInt-Benchmarks](https://github.com/nihilai-collective/stringint-benchmarks)** — Comparing the void-numerics library to jeaiii and std::from_chars.
 
 ## Features
 
