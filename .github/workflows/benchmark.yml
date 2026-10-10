@@ -76,7 +76,7 @@ jobs:
 
       - name: Configure CMake (Unix)
         if: runner.os != 'Windows'
-        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ env.CXX_BIN }} -DBNCH_SWT_BENCHMARKS=TRUE -DPRINT_ASSEMBLY=TRUE
+        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ env.CXX_BIN }} -DBNCH_SWT_BENCHMARKS=TRUE -DPRINT_ASSEMBLY=TRUE -DBNCH_SWT_JSONIFIER_STAGE1=ON
 
       - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
@@ -117,6 +117,15 @@ jobs:
               echo ""
             }
           }
+
+      - name: Upload Assembly Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembly-${{ matrix.os }}-${{ matrix.compiler }}
+          path: |
+            Build/**/*.asm
+            Build/**/*.cod
+          if-no-files-found: warn
 
       - name: Install
         run: |

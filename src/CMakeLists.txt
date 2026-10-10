@@ -3,9 +3,33 @@
 # https://github.com/nihilai-collective/benchmarksuite
 # src/CMakeLists.txt
 
-set(MAIN_SOURCE main${BNCH_SWT_MAIN_FILE_EXTENSION})
+option(BNCH_SWT_JSONIFIER_STAGE1 "Benchmark jsonifier's stage-1 parser in isolation as benchmarksuite-main" OFF)
+
+if (BNCH_SWT_JSONIFIER_STAGE1)
+    set(MAIN_SOURCE jsonifier_stage1.cpp)
+else()
+    set(MAIN_SOURCE main${BNCH_SWT_MAIN_FILE_EXTENSION})
+endif()
 
 add_executable(benchmarksuite-main ${MAIN_SOURCE})
+
+if (BNCH_SWT_JSONIFIER_STAGE1)
+    include(FetchContent)
+    FetchContent_Declare(
+        jsonifier
+        GIT_REPOSITORY https://github.com/nihilai-collective/jsonifier.git
+        GIT_TAG main
+        GIT_SHALLOW TRUE
+        SYSTEM
+    )
+    FetchContent_MakeAvailable(jsonifier)
+    target_link_libraries(benchmarksuite-main PRIVATE Jsonifier::Jsonifier)
+    target_compile_features(benchmarksuite-main PRIVATE cxx_std_23)
+    target_compile_options(benchmarksuite-main PRIVATE
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3;-march=native;-funroll-loops;-fomit-frame-pointer>
+        $<$<CXX_COMPILER_ID:GNU>:-fvect-cost-model=unlimited;-falign-functions=64;-falign-loops=64>
+    )
+endif()
 
 if (NOT BNCH_SWT_CUDA)
 
@@ -69,7 +93,8 @@ set(BNCH_SWT_MSVC_COMPILER_OPTIONS
 )
 
 set(BNCH_SWT_CLANG_COMPILER_OPTIONS
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions;-Wno-lifetime-safety-invalidation>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,24>>:-Wno-lifetime-safety-invalidation>
     -Weverything
     -Wpedantic
     -Werror

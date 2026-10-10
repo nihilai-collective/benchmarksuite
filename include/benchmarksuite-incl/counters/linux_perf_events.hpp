@@ -23,7 +23,7 @@ namespace benchmarksuite::internal {
 		std::optional<uint64_t> branches_val{};
 		std::optional<uint64_t> cycles_val{};
 
-		BNCH_SWT_HOST explicit linux_events() : working(true) {
+		BNCH_SWT_HOST explicit linux_events() noexcept : working(true) {
 			perf_event_attr attribs{};
 			attribs.type		   = PERF_TYPE_HARDWARE;
 			attribs.size		   = sizeof(attribs);
@@ -59,7 +59,7 @@ namespace benchmarksuite::internal {
 			}
 		}
 
-		BNCH_SWT_HOST ~linux_events() {
+		BNCH_SWT_HOST ~linux_events() noexcept {
 			if (fd != -1) {
 				close(fd);
 			}
@@ -122,11 +122,11 @@ namespace benchmarksuite::internal {
 			}
 		}
 
-		BNCH_SWT_HOST bool is_working() {
+		BNCH_SWT_HOST bool is_working() noexcept {
 			return working;
 		}
 
-		BNCH_SWT_HOST uint64_t event_count() {
+		BNCH_SWT_HOST uint64_t event_count() noexcept {
 			return num_events;
 		}
 
@@ -151,7 +151,7 @@ namespace benchmarksuite::internal {
 		}
 	};
 
-	BNCH_SWT_HOST static uint64_t rdtsc() {
+	BNCH_SWT_HOST uint64_t rdtsc() noexcept {
 		uint32_t a, d;
 		__asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
 		return static_cast<unsigned long>(a) | (static_cast<unsigned long>(d) << 32);
