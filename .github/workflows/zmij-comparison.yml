@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Nihilai Collective Corp
+# https://github.com/nihilai-collective/benchmarksuite
+# .github/workflows/zmij-comparison.yml
+
+name: Zmij Comparison
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  zmij-comparison:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: clang
+            name: "Ubuntu Clang"
+          - os: ubuntu-latest
+            compiler: gcc
+            name: "Ubuntu GNU"
+          - os: macos-latest
+            compiler: clang
+            name: "macOS Clang"
+          - os: macos-latest
+            compiler: gcc
+            name: "macOS GNU"
+          - os: windows-latest
+            compiler: msvc
+            name: "Windows MSVC"
+
+    runs-on: ${{ matrix.os }}
+    name: Zmij Comparison on ${{ matrix.name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Setup Clang (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'clang'
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod u+x llvm.sh
+          DEV_VERSION=$(apt-cache search '^clang-[0-9]+$' | grep -oP 'clang-\K[0-9]+' | sort -n | tail -1)
+          sudo ./llvm.sh $DEV_VERSION
+          echo "CXX_BIN=/usr/bin/clang++-$DEV_VERSION" >> $GITHUB_ENV
+
+      - name: Setup GNU (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'gcc'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          DEV_VERSION=$(apt-cache search '^g\+\+-[0-9]+$' | awk '{print $1}' | sort -V | tail -n 1 | sed 's/g++-//')
+          sudo apt-get install -y gcc-$DEV_VERSION g++-$DEV_VERSION
+          echo "CXX_BIN=/usr/bin/g++-$DEV_VERSION" >> $GITHUB_ENV
+
+      - name: Setup Clang (macOS)
+        if: matrix.os == 'macos-latest' && matrix.compiler == 'clang'
+        run: |
+          brew install llvm
+          echo "CXX_BIN=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+
+      - name: Setup GNU (macOS)
+        if: matrix.os == 'macos-latest' && matrix.compiler == 'gcc'
+        run: |
+          brew install gcc
+          GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
+          echo "CXX_BIN=g++-$GCC_VERSION" >> $GITHUB_ENV
+
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure CMake (Unix)
+        if: runner.os != 'Windows'
+        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ env.CXX_BIN }} -DBNCH_SWT_ZMIJ_COMPARISON=TRUE
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: cmake -S . -B ./Build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl -DBNCH_SWT_ZMIJ_COMPARISON=TRUE
+
+      - name: Build
+        run: cmake --build ./Build --config=Release --target zmij-comparison -v
+
+      - name: Run (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          sudo ./Build/zmij-comparison/zmij-comparison | tee zmij-results.md
+          {
+            echo "## Zmij Comparison: ${{ matrix.name }}"
+            cat zmij-results.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./Build/zmij-comparison/zmij-comparison.exe | Tee-Object -FilePath zmij-results.md
+          $exitCode = $LASTEXITCODE
+          "## Zmij Comparison: ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Get-Content zmij-results.md | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          exit $exitCode
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zmij-comparison-${{ matrix.os }}-${{ matrix.compiler }}
+          path: zmij-results.md
+          if-no-files-found: ignore

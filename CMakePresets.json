@@ -85,6 +85,14 @@
       }
     },
     {
+      "name": "release-zmij-comparison-cpu",
+      "inherits": "release-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true,
+        "BNCH_SWT_ZMIJ_COMPARISON": true
+      }
+    },
+    {
       "name": "debug-benchmarksuite-cuda",
       "inherits": "debug-base",
       "cacheVariables": {

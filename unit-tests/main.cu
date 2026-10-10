@@ -16,8 +16,8 @@
 #include <string_view>
 
 // Your alignment macro (adjust as needed)
-#ifndef BNCH_SWT_ALIGN
-	#define BNCH_SWT_ALIGN(alignment) alignas(alignment)
+#ifndef alignas
+	#define alignas(alignment) alignas(alignment)
 #endif
 
 #ifndef BNCH_SWT_HOST
@@ -112,7 +112,7 @@ template<uint64_types value_type> BNCH_SWT_HOST constexpr value_type lzcnt(const
 #endif
 }
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(16) uint_pair {
+template<uint_types value_type> struct alignas(16) uint_pair {
 	template<uint_types value_type_new> friend struct div_mod_logic_new;
 	benchmarksuite::aligned_const<value_type, (sizeof(value_type) * 2) % 16> multiplicand;
 	benchmarksuite::aligned_const<value_type, (sizeof(value_type) * 2) % 16> shift;
@@ -254,12 +254,12 @@ template<typename value_type> BNCH_SWT_HOST_DEVICE consteval value_type log2_ct(
 	return result;
 }
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) aligned_uint_new {
+template<uint_types value_type> struct alignas(benchmarksuite::device_alignment) aligned_uint_new {
   protected:
 	benchmarksuite::aligned_const<value_type, benchmarksuite::device_alignment> value;
 };
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
+template<uint_types value_type> struct alignas(benchmarksuite::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
 	BNCH_SWT_HOST constexpr value_type get_value() const noexcept {
 		return aligned_uint_new<value_type>::value.value;
 	}

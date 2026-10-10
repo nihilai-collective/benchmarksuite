@@ -76,13 +76,13 @@ namespace benchmarksuite {
 			return return_datas;
 		}
 
-		BNCH_SWT_ALIGN(64) value_type data_val[size_val] {};
+		alignas(64) value_type data_val[size_val]{};
 	};
 
 	template<uint64_t size> string_literal(const char (&str)[size]) -> string_literal<size>;
 
 	template<uint64_t size> BNCH_SWT_HOST std::ostream& operator<<(std::ostream& os, const string_literal<size>& input) noexcept {
-		os.write(input.data_val, input.size());
+		os.write(input.data_val, static_cast<std::streamsize>(input.size()));
 		return os;
 	}
 

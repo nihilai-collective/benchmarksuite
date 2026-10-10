@@ -16,6 +16,7 @@
 #include <vector>
 
 using namespace benchmarksuite;
+using namespace benchmarksuite::internal;
 using rt_ut::unit_test;
 
 namespace {
