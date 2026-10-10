@@ -41,21 +41,21 @@
 namespace benchmarksuite::internal {
 
 	struct performance_counters {
-		double cache_misses{};
+		BNCH_SWT_HOST performance_counters() noexcept : branch_misses{}, cache_misses{}, instructions{}, branches{}, cycles{} {
+		}
+
+		BNCH_SWT_HOST performance_counters(double c, double b, double m, double i, double cm) noexcept
+			: branch_misses{ m }, cache_misses{ cm }, instructions{ i }, branches{ b }, cycles{ c } {
+		}
+
 		double branch_misses{};
+		double cache_misses{};
 		double instructions{};
 		double branches{};
 		double cycles{};
-
-		BNCH_SWT_HOST performance_counters(double c, double b, double m, double i, double cm)
-			: cache_misses{ cm }, branch_misses{ m }, instructions{ i }, branches{ b }, cycles{ c } {
-		}
-
-		BNCH_SWT_HOST performance_counters() : cache_misses{}, branch_misses{}, instructions{}, branches{}, cycles{} {
-		}
 	};
 
-	static inline performance_counters operator-(const performance_counters& a, const performance_counters& b) {
+	BNCH_SWT_HOST performance_counters operator-(const performance_counters& a, const performance_counters& b) noexcept {
 		return performance_counters(a.cycles - b.cycles, a.branches - b.branches, a.branch_misses - b.branch_misses, a.instructions - b.instructions,
 			a.cache_misses - b.cache_misses);
 	}
@@ -119,7 +119,7 @@ namespace benchmarksuite::internal {
 			kpep_db* db;
 		};
 
-		enum class kpep_config_error_code {
+		enum class kpep_config_error_code : uint8_t {
 			kpep_config_error_none					 = 0,
 			kpep_config_error_invalid_argument		 = 1,
 			kpep_config_error_out_of_memory			 = 2,
@@ -145,45 +145,66 @@ namespace benchmarksuite::internal {
 		};
 
 		struct event_alias {
-			const char* alias;
 			std::array<const char*, 8> names;
+			const char* alias;
 		};
 
 		struct loaded_symbols {
-			int32_t (*kpc_cpu_string)(char* buf, size_t buf_size){};
-			uint32_t (*kpc_pmu_version)(){};
-			uint32_t (*kpc_get_counting)(){};
-			int32_t (*kpc_set_counting)(uint32_t classes){};
-			uint32_t (*kpc_get_thread_counting)(){};
-			int32_t (*kpc_set_thread_counting)(uint32_t classes){};
-			uint32_t (*kpc_get_config_count)(uint32_t classes){};
-			int32_t (*kpc_get_config)(uint32_t classes, uint64_t* config){};
-			int32_t (*kpc_set_config)(uint32_t classes, uint64_t* config){};
-			uint32_t (*kpc_get_counter_count)(uint32_t classes){};
-			int32_t (*kpc_get_cpu_counters)(bool all_cpus, uint32_t classes, int32_t* curcpu, uint64_t* buf){};
-			int32_t (*kpc_get_thread_counters)(uint32_t tid, uint32_t buf_count, uint64_t* buf){};
-			int32_t (*kpc_force_all_ctrs_set)(int32_t val){};
-			int32_t (*kpc_force_all_ctrs_get)(int32_t* val_out){};
-			int32_t (*kpep_config_create)(kpep_db* db, kpep_config** cfg_ptr){};
-			void (*kpep_config_free)(kpep_config* cfg){};
-			int32_t (*kpep_config_add_event)(kpep_config* cfg, kpep_event** ev_ptr, uint32_t flag, uint32_t* err){};
-			int32_t (*kpep_config_force_counters)(kpep_config* cfg){};
-			int32_t (*kpep_config_kpc)(kpep_config* cfg, uint64_t* buf, size_t buf_size){};
-			int32_t (*kpep_config_kpc_count)(kpep_config* cfg, size_t* count_ptr){};
-			int32_t (*kpep_config_kpc_classes)(kpep_config* cfg, uint32_t* classes_ptr){};
-			int32_t (*kpep_config_kpc_map)(kpep_config* cfg, size_t* buf, size_t buf_size){};
-			int32_t (*kpep_db_create)(const char* name, kpep_db** db_ptr){};
-			void (*kpep_db_free)(kpep_db* db){};
-			int32_t (*kpep_db_event)(kpep_db* db, const char* name, kpep_event** ev_ptr){};
-			void* lib_handle_kperf{ nullptr };
-			void* lib_handle_kperfdata{ nullptr };
-			bool valid{ false };
-
 			loaded_symbols()								 = default;
-			loaded_symbols(const loaded_symbols&)			 = delete;
 			loaded_symbols& operator=(const loaded_symbols&) = delete;
+			loaded_symbols(const loaded_symbols&)			 = delete;
 
-			~loaded_symbols() {
+			int32_t (*kpep_config_add_event)(kpep_config* cfg, kpep_event** ev_ptr, uint32_t flag, uint32_t* err){};
+
+			int32_t (*kpc_get_cpu_counters)(bool all_cpus, uint32_t classes, int32_t* curcpu, uint64_t* buf){};
+
+			int32_t (*kpc_get_thread_counters)(uint32_t tid, uint32_t buf_count, uint64_t* buf){};
+
+			int32_t (*kpep_config_kpc_map)(kpep_config* cfg, size_t* buf, size_t buf_size){};
+
+			int32_t (*kpep_config_kpc)(kpep_config* cfg, uint64_t* buf, size_t buf_size){};
+
+			int32_t (*kpep_db_event)(kpep_db* db, const char* name, kpep_event** ev_ptr){};
+
+			int32_t (*kpep_config_kpc_classes)(kpep_config* cfg, uint32_t* classes_ptr){};
+
+			int32_t (*kpep_config_kpc_count)(kpep_config* cfg, size_t* count_ptr){};
+
+			int32_t (*kpep_config_create)(kpep_db* db, kpep_config** cfg_ptr){};
+
+			int32_t (*kpc_get_config)(uint32_t classes, uint64_t* config){};
+
+			int32_t (*kpc_set_config)(uint32_t classes, uint64_t* config){};
+
+			int32_t (*kpep_db_create)(const char* name, kpep_db** db_ptr){};
+
+			int32_t (*kpep_config_force_counters)(kpep_config* cfg){};
+
+			int32_t (*kpc_cpu_string)(char* buf, size_t buf_size){};
+
+			int32_t (*kpc_set_thread_counting)(uint32_t classes){};
+
+			uint32_t (*kpc_get_counter_count)(uint32_t classes){};
+
+			int32_t (*kpc_force_all_ctrs_get)(int32_t* val_out){};
+
+			uint32_t (*kpc_get_config_count)(uint32_t classes){};
+
+			int32_t (*kpc_force_all_ctrs_set)(int32_t val){};
+
+			int32_t (*kpc_set_counting)(uint32_t classes){};
+
+			void (*kpep_config_free)(kpep_config* cfg){};
+
+			uint32_t (*kpc_get_thread_counting)(){};
+
+			void (*kpep_db_free)(kpep_db* db){};
+
+			uint32_t (*kpc_get_counting)(){};
+
+			uint32_t (*kpc_pmu_version)(){};
+
+			BNCH_SWT_HOST ~loaded_symbols() noexcept {
 				if (lib_handle_kperf) {
 					dlclose(lib_handle_kperf);
 				}
@@ -191,20 +212,22 @@ namespace benchmarksuite::internal {
 					dlclose(lib_handle_kperfdata);
 				}
 			}
+
+			void* lib_handle_kperfdata{ nullptr };
+			void* lib_handle_kperf{ nullptr };
+			bool valid{ false };
 		};
 
-		BNCH_SWT_HOST static bool load_symbols(void* handle, const std::span<const lib_symbol>& symbols, std::string_view lib_name) {
-			for (const auto& symbol: symbols) {
-				*symbol.impl = dlsym(handle, symbol.name);
-				if (!*symbol.impl) {
-					std::cerr << "Failed to load " << lib_name << " function: " << symbol.name << "." << std::endl;
-					return false;
-				}
-			}
-			return true;
-		}
+		static constexpr std::array<event_alias, 5> profile_events{ {
+			{ { "FIXED_CYCLES", "CPU_CLK_UNHALTED.THREAD", "CPU_CLK_UNHALTED.CORE" }, "cycles" },
+			{ { "FIXED_INSTRUCTIONS", "INST_RETIRED.ANY" }, "instructions" },
+			{ { "INST_BRANCH", "BR_INST_RETIRED.ALL_BRANCHES", "INST_RETIRED.ANY" }, "branches" },
+			{ { "BRANCH_MISPRED_NONSPEC", "BRANCH_MISPREDICT", "BR_MISP_RETIRED.ALL_BRANCHES", "BR_INST_RETIRED.MISPRED" }, "branch-misses" },
+			{ { "L1D_CACHE_MISS_LD", "L1D_CACHE_MISS_LD_NONSPEC", "L2_CACHE_MISS_DATA", "L2_CACHE_MISS", "LLC_MISSES", "LONGEST_LAT_CACHE.MISS", "MEM_LOAD_RETIRED.L3_MISS" },
+				"cache-misses" },
+		} };
 
-		BNCH_SWT_HOST static const loaded_symbols& get_symbols() {
+		BNCH_SWT_HOST static const loaded_symbols& get_symbols() noexcept {
 			static const loaded_symbols& symbols = *[] {
 				auto* result = new loaded_symbols{};
 
@@ -260,16 +283,18 @@ namespace benchmarksuite::internal {
 			return symbols;
 		}
 
-		static constexpr std::array<event_alias, 5> profile_events{ {
-			{ "cycles", { "FIXED_CYCLES", "CPU_CLK_UNHALTED.THREAD", "CPU_CLK_UNHALTED.CORE" } },
-			{ "instructions", { "FIXED_INSTRUCTIONS", "INST_RETIRED.ANY" } },
-			{ "branches", { "INST_BRANCH", "BR_INST_RETIRED.ALL_BRANCHES", "INST_RETIRED.ANY" } },
-			{ "branch-misses", { "BRANCH_MISPRED_NONSPEC", "BRANCH_MISPREDICT", "BR_MISP_RETIRED.ALL_BRANCHES", "BR_INST_RETIRED.MISPRED" } },
-			{ "cache-misses",
-				{ "L1D_CACHE_MISS_LD", "L1D_CACHE_MISS_LD_NONSPEC", "L2_CACHE_MISS_DATA", "L2_CACHE_MISS", "LLC_MISSES", "LONGEST_LAT_CACHE.MISS", "MEM_LOAD_RETIRED.L3_MISS" } },
-		} };
+		BNCH_SWT_HOST static bool load_symbols(void* handle, const std::span<const lib_symbol>& symbols, std::string_view lib_name) noexcept {
+			for (const auto& symbol: symbols) {
+				*symbol.impl = dlsym(handle, symbol.name);
+				if (!*symbol.impl) {
+					std::cerr << "Failed to load " << lib_name << " function: " << symbol.name << "." << std::endl;
+					return false;
+				}
+			}
+			return true;
+		}
 
-		BNCH_SWT_HOST static kpep_event* get_event(kpep_db* db, const event_alias* alias) {
+		BNCH_SWT_HOST static kpep_event* get_event(kpep_db* db, const event_alias* alias) noexcept {
 			const auto& symbols = get_symbols();
 			for (const char* name: alias->names) {
 				if (!name) {
@@ -285,13 +310,13 @@ namespace benchmarksuite::internal {
 
 	  public:
 		struct counter_setup {
-			std::array<uint64_t, kpc_max_counters> regs{ 0 };
 			std::array<size_t, kpc_max_counters> counter_map{ 0 };
+			std::array<uint64_t, kpc_max_counters> regs{ 0 };
 			size_t counter_map_count{ 0 };
 			bool has_events_val{ false };
 		};
 
-		BNCH_SWT_HOST static const counter_setup& get_setup() {
+		BNCH_SWT_HOST static const counter_setup& get_setup() noexcept {
 			static const counter_setup& result = *[] {
 				counter_setup setup{};
 				const auto& symbols = get_symbols();
@@ -308,7 +333,7 @@ namespace benchmarksuite::internal {
 					const loaded_symbols* symbols{ nullptr };
 					kpep_db* db{ nullptr };
 					kpep_config* cfg{ nullptr };
-					~kpep_cleanup() {
+					BNCH_SWT_HOST ~kpep_cleanup() noexcept {
 						if (cfg) {
 							symbols->kpep_config_free(cfg);
 						}
@@ -375,11 +400,7 @@ namespace benchmarksuite::internal {
 		}
 
 	  public:
-		BNCH_SWT_HOST static bool setup_performance_counters() {
-			return get_setup().has_events_val;
-		}
-
-		BNCH_SWT_HOST static performance_counters get_counters() {
+		BNCH_SWT_HOST static performance_counters get_counters() noexcept {
 			static bool warned	= false;
 			const auto& symbols = get_symbols();
 			const auto& setup	= get_setup();
@@ -403,7 +424,11 @@ namespace benchmarksuite::internal {
 			return performance_counters{ value_at(0), value_at(2), value_at(3), value_at(1), value_at(4) };
 		}
 
-		BNCH_SWT_HOST static bool has_events() {
+		BNCH_SWT_HOST static bool setup_performance_counters() noexcept {
+			return get_setup().has_events_val;
+		}
+
+		BNCH_SWT_HOST static bool has_events() noexcept {
 			return get_setup().has_events_val;
 		}
 	};

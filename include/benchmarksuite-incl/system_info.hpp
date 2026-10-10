@@ -18,9 +18,9 @@ namespace benchmarksuite {
 
 	namespace internal {
 
-		template<benchmark_types> BNCH_SWT_HOST std::string get_device_name();
+		template<benchmark_types> BNCH_SWT_HOST std::string get_device_name() noexcept;
 
-		template<> BNCH_SWT_HOST std::string get_device_name<benchmark_types::cpu>() {
+		template<> BNCH_SWT_HOST std::string get_device_name<benchmark_types::cpu>() noexcept {
 			std::string result{};
 
 #if BNCH_SWT_ARCH_X64
@@ -115,21 +115,7 @@ namespace benchmarksuite {
 			return result;
 		}
 
-		[[nodiscard]] consteval auto get_os_name() {
-#if BNCH_SWT_PLATFORM_WINDOWS
-			return string_literal{ "Windows" };
-#elif BNCH_SWT_PLATFORM_MAC
-			return string_literal{ "macOS" };
-#elif BNCH_SWT_PLATFORM_LINUX
-			return string_literal{ "Linux" };
-#elif BNCH_SWT_PLATFORM_ANDROID
-			return string_literal{ "Android" };
-#else
-			return string_literal{ "Unknown" };
-#endif
-		}
-
-		[[nodiscard]] consteval auto get_compiler_name() {
+		[[nodiscard]] consteval auto get_compiler_name() noexcept {
 #if BNCH_SWT_COMPILER_CUDA
 			return string_literal{ "CUDA" };
 #elif BNCH_SWT_COMPILER_CLANG
@@ -143,22 +129,45 @@ namespace benchmarksuite {
 #endif
 		}
 
-		static constexpr benchmarksuite::string_literal operating_system_name{ get_os_name() };
-		static constexpr benchmarksuite::string_literal operating_system_version{ BNCH_SWT_OPERATING_SYSTEM_VERSION };
-		static constexpr benchmarksuite::string_literal compiler_id{ get_compiler_name() };
-		static constexpr benchmarksuite::string_literal compiler_version{ BNCH_SWT_COMPILER_VERSION };
+		[[nodiscard]] consteval auto get_os_name() noexcept {
+#if BNCH_SWT_PLATFORM_WINDOWS
+			return string_literal{ "Windows" };
+#elif BNCH_SWT_PLATFORM_MAC
+			return string_literal{ "macOS" };
+#elif BNCH_SWT_PLATFORM_LINUX
+			return string_literal{ "Linux" };
+#elif BNCH_SWT_PLATFORM_ANDROID
+			return string_literal{ "Android" };
+#else
+			return string_literal{ "Unknown" };
+#endif
+		}
+
+		inline constexpr string_literal operating_system_name{ get_os_name() };
+		inline constexpr string_literal operating_system_version{ BNCH_SWT_OPERATING_SYSTEM_VERSION };
+		inline constexpr string_literal compiler_id{ get_compiler_name() };
+		inline constexpr string_literal compiler_version{ BNCH_SWT_COMPILER_VERSION };
+
+		template<benchmark_types benchmark_type> consteval auto get_instruction_set_name() noexcept {
+			if constexpr (benchmark_type == benchmark_types::cpu) {
+				return string_literal{ BNCH_SWT_INSTRUCTION_SET_NAME };
+			} else {
+				return string_literal{ "CUDA" };
+			}
+		}
 
 	}
 
 	template<benchmark_types benchmark_type> struct system_info_data {
-		inline static constexpr std::string_view compiler_version{ internal::compiler_version };
-		inline static constexpr std::string_view compiler_id{ internal::compiler_id };
-		inline static constexpr std::string_view os_version{ internal::operating_system_version };
-		inline static constexpr std::string_view os_id{ internal::operating_system_name };
-		inline static constexpr std::string_view device_type{ benchmark_type == benchmark_types::cpu ? "CPU" : "GPU" };
-		inline static constexpr std::string_view instruction_set_name{ benchmark_type == benchmark_types::cpu ? BNCH_SWT_INSTRUCTION_SET_NAME : "CUDA" };
+		static constexpr string_literal compiler_version{ internal::compiler_version };
+		static constexpr string_literal compiler_id{ internal::compiler_id };
+		static constexpr string_literal os_version{ internal::operating_system_version };
+		static constexpr string_literal os_id{ internal::operating_system_name };
+		static constexpr string_literal device_type{ benchmark_type == benchmark_types::cpu ? "CPU" : "GPU" };
+		static constexpr string_literal instruction_set_name{ internal::get_instruction_set_name<benchmark_type>() };
+
 		BNCH_SWT_HOST static std::string_view device_name() noexcept {
-			static const std::string& name{ *new std::string{ internal::get_device_name<benchmark_type>() + "-" + static_cast<std::string>(instruction_set_name) } };
+			static const std::string& name{ *new std::string{ internal::get_device_name<benchmark_type>() + "-" + instruction_set_name.operator std::string() } };
 			return name;
 		}
 	};

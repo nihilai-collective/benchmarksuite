@@ -16,15 +16,16 @@
 #include <vector>
 
 using namespace benchmarksuite;
+using namespace benchmarksuite::internal;
 using rt_ut::unit_test;
 
 namespace {
 
-	bool approx(double a, double b, double eps = 1e-6) {
+	inline bool approx(double a, double b, double eps = 1e-6) noexcept {
 		return std::abs(a - b) <= eps;
 	}
 
-	library_benchmark_data make_bench(double mean, double variance, uint64_t sample_size, double throughput, bool converged) {
+	inline library_benchmark_data make_bench(double mean, double variance, uint64_t sample_size, double throughput, bool converged) noexcept {
 		library_benchmark_data d{};
 		d.final_mean		= mean;
 		d.final_variance	= variance;
@@ -34,7 +35,7 @@ namespace {
 		return d;
 	}
 
-	library_completion_data make_completion(std::string_view name, double throughput, position_type pt, uint64_t position) {
+	inline library_completion_data make_completion(std::string_view name, double throughput, position_type pt, uint64_t position) noexcept {
 		library_completion_data d{};
 		d.final_throughput	= throughput;
 		d.name				= name;
@@ -43,7 +44,7 @@ namespace {
 		return d;
 	}
 
-	std::optional<library_completion_data> find_lib(const std::vector<library_completion_data>& v, std::string_view name) {
+	inline std::optional<library_completion_data> find_lib(const std::vector<library_completion_data>& v, std::string_view name) noexcept {
 		for (const auto& item: v) {
 			if (item.name == name) {
 				return item;
@@ -52,7 +53,7 @@ namespace {
 		return std::nullopt;
 	}
 
-	std::optional<library_positions> find_pos(const std::vector<library_positions>& v, std::string_view name) {
+	inline std::optional<library_positions> find_pos(const std::vector<library_positions>& v, std::string_view name) noexcept {
 		for (const auto& item: v) {
 			if (item.lib_name == name) {
 				return item;
@@ -61,21 +62,21 @@ namespace {
 		return std::nullopt;
 	}
 
-	iteration_metrics make_metric(double time_ns, uint64_t bytes) {
+	inline iteration_metrics make_metric(double time_ns, uint64_t bytes) noexcept {
 		iteration_metrics value{};
 		value.time_in_ns	  = time_ns;
 		value.bytes_processed = bytes;
 		return value;
 	}
 
-	bool contains(const std::string& haystack, std::string_view needle) {
+	inline bool contains(const std::string& haystack, std::string_view needle) noexcept {
 		return haystack.find(needle) != std::string::npos;
 	}
 
 	template<benchmark_types benchmark_type> struct final_test_results_accessor : public final_test_results<benchmark_type> {
 		using base = final_test_results<benchmark_type>;
 		using base::base;
-		final_test_results_accessor(base b) : base(std::move(b)) {
+		inline final_test_results_accessor(base b) noexcept : base(std::move(b)) {
 		}
 		using base::result_to_csv_line;
 		using base::md_separator_row;
@@ -90,7 +91,7 @@ namespace {
 	template<stage_config_data stage_config> struct stage_results_data_accessor : public stage_results_data<stage_config> {
 		using base = stage_results_data<stage_config>;
 		using base::base;
-		stage_results_data_accessor(base b) : base(std::move(b)) {
+		inline stage_results_data_accessor(base b) noexcept : base(std::move(b)) {
 		}
 		using base::accum_to_csv_line;
 		using base::stage_name_str;
