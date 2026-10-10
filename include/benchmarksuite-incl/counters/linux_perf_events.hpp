@@ -16,14 +16,7 @@ namespace benchmarksuite::internal {
 
 	class linux_events {
 	  public:
-		std::optional<uint64_t> cache_references_val{};
-		std::optional<uint64_t> branch_misses_val{};
-		std::optional<uint64_t> instructions_val{};
-		std::optional<uint64_t> cache_misses_val{};
-		std::optional<uint64_t> branches_val{};
-		std::optional<uint64_t> cycles_val{};
-
-		BNCH_SWT_HOST explicit linux_events() : working(true) {
+		BNCH_SWT_HOST explicit linux_events() noexcept : working(true) {
 			perf_event_attr attribs{};
 			attribs.type		   = PERF_TYPE_HARDWARE;
 			attribs.size		   = sizeof(attribs);
@@ -59,25 +52,7 @@ namespace benchmarksuite::internal {
 			}
 		}
 
-		BNCH_SWT_HOST ~linux_events() {
-			if (fd != -1) {
-				close(fd);
-			}
-		}
-
-		BNCH_SWT_HOST void start() {
-			if (fd != -1) {
-				if (ioctl(fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP) == -1) {
-					report_error("ioctl(PERF_EVENT_IOC_RESET)");
-				}
-
-				if (ioctl(fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP) == -1) {
-					report_error("ioctl(PERF_EVENT_IOC_ENABLE)");
-				}
-			}
-		}
-
-		BNCH_SWT_HOST void end() {
+		BNCH_SWT_HOST void end() noexcept {
 			const uint64_t read_count = num_events * 2 + 1;
 
 			if (fd != -1) {
@@ -122,42 +97,67 @@ namespace benchmarksuite::internal {
 			}
 		}
 
-		BNCH_SWT_HOST bool is_working() {
+		BNCH_SWT_HOST void start() noexcept {
+			if (fd != -1) {
+				if (ioctl(fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP) == -1) {
+					report_error("ioctl(PERF_EVENT_IOC_RESET)");
+				}
+
+				if (ioctl(fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP) == -1) {
+					report_error("ioctl(PERF_EVENT_IOC_ENABLE)");
+				}
+			}
+		}
+
+		BNCH_SWT_HOST uint64_t event_count() const noexcept {
+			return num_events;
+		}
+
+		BNCH_SWT_HOST bool is_working() const noexcept {
 			return working;
 		}
 
-		BNCH_SWT_HOST uint64_t event_count() {
-			return num_events;
+		BNCH_SWT_HOST ~linux_events() noexcept {
+			if (fd != -1) {
+				close(fd);
+			}
 		}
+
+		std::optional<uint64_t> cache_references_val{};
+		std::optional<uint64_t> branch_misses_val{};
+		std::optional<uint64_t> instructions_val{};
+		std::optional<uint64_t> cache_misses_val{};
+		std::optional<uint64_t> branches_val{};
+		std::optional<uint64_t> cycles_val{};
 
 	  protected:
 		static constexpr uint64_t max_events{ 6 };
 
-		std::array<uint64_t, max_events * 2 + 1> temp_result_vec{};
-		std::array<uint32_t, max_events> present_indices{};
-		std::array<uint64_t, max_events> ids{};
-		uint64_t num_events{};
-		int32_t fd{ -1 };
-		bool working{};
-
 		static constexpr std::array<perf_hw_id, max_events> config_arrray{ { PERF_COUNT_HW_CPU_CYCLES, PERF_COUNT_HW_INSTRUCTIONS, PERF_COUNT_HW_BRANCH_INSTRUCTIONS,
 			PERF_COUNT_HW_BRANCH_MISSES, PERF_COUNT_HW_CACHE_REFERENCES, PERF_COUNT_HW_CACHE_MISSES } };
 
-		BNCH_SWT_HOST void report_error(std::string_view error) {
+		BNCH_SWT_HOST void report_error(std::string_view error) noexcept {
 			if (working) {
 				std::cerr << "Error: " << error << std::endl;
 				working = false;
 			}
 		}
+
+		std::array<uint64_t, max_events * 2 + 1> temp_result_vec{};
+		std::array<uint64_t, max_events> ids{};
+		uint64_t num_events{};
+		std::array<uint32_t, max_events> present_indices{};
+		int32_t fd{ -1 };
+		bool working{};
 	};
 
-	BNCH_SWT_HOST static uint64_t rdtsc() {
+	BNCH_SWT_HOST uint64_t rdtsc() noexcept {
 		uint32_t a, d;
 		__asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
 		return static_cast<unsigned long>(a) | (static_cast<unsigned long>(d) << 32);
 	}
 
-	BNCH_SWT_HOST linux_events& get_thread_linux_events() {
+	BNCH_SWT_HOST linux_events& get_thread_linux_events() noexcept {
 		static thread_local linux_events* linux_events_val{ new linux_events{} };
 		return *linux_events_val;
 	}

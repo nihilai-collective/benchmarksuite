@@ -13,7 +13,7 @@ namespace benchmarksuite {
 
 	class file_handle {
 	  public:
-		BNCH_SWT_HOST static void save_file(const std::string& data, const std::string& path) {
+		BNCH_SWT_HOST static void save_file(const std::string& data, const std::string& path) noexcept {
 			std::filesystem::path abs_path = std::filesystem::absolute(path);
 			std::filesystem::create_directories(abs_path.parent_path());
 			std::fstream stream{ abs_path, std::ios::out | std::ios::trunc };

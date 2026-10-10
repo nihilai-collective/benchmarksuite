@@ -57,6 +57,11 @@ endif()
 
 target_link_libraries(benchmarksuite-main PRIVATE benchmarksuite::benchmarksuite)
 
+target_compile_definitions(
+    benchmarksuite-main PRIVATE
+    BNCH_SWT_FAST_FLOAT_CORPUS_DIR="${CMAKE_SOURCE_DIR}/data/fast_float_corpus"
+)
+
 set(BNCH_SWT_MSVC_COMPILER_OPTIONS
     /wd4820
     /wd5039
@@ -69,7 +74,8 @@ set(BNCH_SWT_MSVC_COMPILER_OPTIONS
 )
 
 set(BNCH_SWT_CLANG_COMPILER_OPTIONS
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions;-Wno-lifetime-safety-invalidation>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,24>>:-Wno-lifetime-safety-invalidation>
     -Weverything
     -Wpedantic
     -Werror
