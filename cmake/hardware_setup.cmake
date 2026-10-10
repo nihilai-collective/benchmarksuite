@@ -10,7 +10,10 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/nihilai-collective/voided-hw-detection.git
     GIT_TAG main
 )
+set(BNCH_SWT_SAVED_FETCHCONTENT_FULLY_DISCONNECTED ${FETCHCONTENT_FULLY_DISCONNECTED})
+set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
 FetchContent_MakeAvailable(voided_hw_detection)
+set(FETCHCONTENT_FULLY_DISCONNECTED ${BNCH_SWT_SAVED_FETCHCONTENT_FULLY_DISCONNECTED})
 
 if(BNCH_SWT_CUDA)
     voided_hw_detect_gpu(
