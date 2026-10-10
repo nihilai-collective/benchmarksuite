@@ -1,0 +1,12 @@
+:	type
+,	FeatureCollection
+:	features
+:	type
+,	Feature
+:	properties
+:	name
+nssssss}	Canada
+:	geometry
+:	type
+,	Polygon
+:	coordinates

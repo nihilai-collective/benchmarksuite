@@ -33,29 +33,48 @@ if (NOT BNCH_SWT_CUDA)
                 )
             endif()
         elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            set(ASM_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/asm_output")
-            file(MAKE_DIRECTORY ${ASM_OUTPUT_DIR})
-
-            target_compile_options(benchmarksuite-main PRIVATE 
-                "/FAcs"
-                "/Fa${ASM_OUTPUT_DIR}/"
-            )
-    
-            message(STATUS "Assembly printing enabled for MSVC. Assembly files will be generated in: ${ASM_OUTPUT_DIR}")
+            message(STATUS "Assembly printing enabled for MSVC. Using Post-Build dumpbin to generate assembly file.")
 
             add_custom_command(
                 TARGET benchmarksuite-main POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying MSVC assembly files from ${ASM_OUTPUT_DIR}..."
-                COMMAND ${CMAKE_COMMAND} -E copy_directory "${ASM_OUTPUT_DIR}" "$<TARGET_FILE_DIR:benchmarksuite-main>"
-                COMMAND ${CMAKE_COMMAND} -E echo "Assembly files location: $<TARGET_FILE_DIR:benchmarksuite-main>"
-                COMMENT "Copying MSVC assembly output"
+                COMMAND ${CMAKE_COMMAND} -E echo "Assembly file location: $<TARGET_FILE_DIR:benchmarksuite-main>/benchmarksuite-main.asm"
+                COMMAND dumpbin /NOLOGO /DISASM "/OUT:$<TARGET_FILE_DIR:benchmarksuite-main>/benchmarksuite-main.asm" "$<TARGET_FILE:benchmarksuite-main>"
+                COMMENT "Generating final assembly for benchmarksuite-main"
+                VERBATIM
             )
         endif()
     endif()
 
 endif()
 
-target_link_libraries(benchmarksuite-main PRIVATE benchmarksuite::benchmarksuite)
+include(FetchContent)
+
+FetchContent_Declare(
+    jsonifier
+    GIT_REPOSITORY https://github.com/nihilai-collective/Jsonifier.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+    SYSTEM
+)
+
+FetchContent_Declare(
+    simdjson
+    GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+    GIT_TAG master
+    GIT_SHALLOW TRUE
+    SYSTEM
+)
+
+FetchContent_MakeAvailable(jsonifier simdjson)
+
+set_target_properties(benchmarksuite-main PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON CXX_SCAN_FOR_MODULES OFF)
+
+target_link_libraries(benchmarksuite-main PRIVATE benchmarksuite::benchmarksuite Jsonifier::Jsonifier simdjson::simdjson)
+
+target_compile_definitions(
+    benchmarksuite-main PRIVATE
+    BNCH_SWT_STRING_CORPUS_DIR="${CMAKE_SOURCE_DIR}/data/string_corpus"
+)
 
 set(BNCH_SWT_MSVC_COMPILER_OPTIONS
     /wd4820
@@ -69,7 +88,8 @@ set(BNCH_SWT_MSVC_COMPILER_OPTIONS
 )
 
 set(BNCH_SWT_CLANG_COMPILER_OPTIONS
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions;-Wno-lifetime-safety-invalidation>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,24>>:-Wno-lifetime-safety-invalidation>
     -Weverything
     -Wpedantic
     -Werror
