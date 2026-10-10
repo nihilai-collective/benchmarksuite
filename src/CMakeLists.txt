@@ -35,10 +35,16 @@ if (NOT BNCH_SWT_CUDA)
         elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             set(ASM_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/asm_output")
             file(MAKE_DIRECTORY ${ASM_OUTPUT_DIR})
+            file(TO_NATIVE_PATH "${ASM_OUTPUT_DIR}/" ASM_OUTPUT_DIR_NATIVE)
 
-            target_compile_options(benchmarksuite-main PRIVATE 
+            add_custom_target(benchmarksuite-main-asm-dir
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${ASM_OUTPUT_DIR}"
+            )
+            add_dependencies(benchmarksuite-main benchmarksuite-main-asm-dir)
+
+            target_compile_options(benchmarksuite-main PRIVATE
                 "/FAcs"
-                "/Fa${ASM_OUTPUT_DIR}/"
+                "/Fa${ASM_OUTPUT_DIR_NATIVE}"
             )
     
             message(STATUS "Assembly printing enabled for MSVC. Assembly files will be generated in: ${ASM_OUTPUT_DIR}")
@@ -69,7 +75,8 @@ set(BNCH_SWT_MSVC_COMPILER_OPTIONS
 )
 
 set(BNCH_SWT_CLANG_COMPILER_OPTIONS
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions;-Wno-lifetime-safety-invalidation>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>>:-Wno-lifetime-safety-lifetimebound-violation;-Wno-lifetime-safety-intra-tu-suggestions>
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>,$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,23>>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,24>>:-Wno-lifetime-safety-invalidation>
     -Weverything
     -Wpedantic
     -Werror
