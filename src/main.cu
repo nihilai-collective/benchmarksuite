@@ -79,7 +79,7 @@ template<uint64_types value_type> BNCH_SWT_HOST constexpr value_type lzcnt(const
 #endif
 }
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(16) uint_pair {
+template<uint_types value_type> struct alignas(16) uint_pair {
 	template<uint_types value_type_new> friend struct div_mod_logic_new;
 	benchmarksuite::aligned_const<value_type, (sizeof(value_type) * 2) % 16> multiplicand;
 	benchmarksuite::aligned_const<value_type, (sizeof(value_type) * 2) % 16> shift;
@@ -88,7 +88,7 @@ template<uint_types value_type> struct BNCH_SWT_ALIGN(16) uint_pair {
 	static constexpr value_type double_bits{ static_cast<value_type>(sizeof(value_type) * 2 * 8) };
 	static constexpr value_type double_bits_sub_1{ static_cast<value_type>((sizeof(value_type) * 2 * 8) - 1) };
 
-	BNCH_SWT_HOST_DEVICE constexpr uint_pair() {
+	BNCH_SWT_HOST_DEVICE constexpr uint_pair() noexcept {
 	}
 
 	BNCH_SWT_HOST_DEVICE friend constexpr uint_pair operator+(const uint_pair& a, const uint_pair& b) noexcept {
@@ -120,7 +120,7 @@ template<uint_types value_type> struct BNCH_SWT_ALIGN(16) uint_pair {
 	}
 
   public:
-	BNCH_SWT_HOST_DEVICE constexpr uint_pair(value_type value_01, value_type value_02) : multiplicand{ value_01 }, shift{ value_02 } {
+	BNCH_SWT_HOST_DEVICE constexpr uint_pair(value_type value_01, value_type value_02) noexcept : multiplicand{ value_01 }, shift{ value_02 } {
 	}
 
 	BNCH_SWT_HOST_DEVICE static constexpr uint_pair collect_values(value_type divisor_new) noexcept {
@@ -205,12 +205,12 @@ template<typename value_type> BNCH_SWT_HOST_DEVICE consteval value_type log2_ct(
 	return result;
 }
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) aligned_uint_new {
+template<uint_types value_type> struct alignas(benchmarksuite::device_alignment) aligned_uint_new {
   protected:
 	benchmarksuite::aligned_const<value_type, benchmarksuite::device_alignment> value;
 };
 
-template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
+template<uint_types value_type> struct alignas(benchmarksuite::device_alignment) div_mod_logic_new : public aligned_uint_new<value_type>, public uint_pair<value_type> {
 	BNCH_SWT_HOST_DEVICE static constexpr auto collect_values(value_type d) noexcept {
 		div_mod_logic_new return_value{};
 		return_value.value.emplace(d);
@@ -237,7 +237,7 @@ template<uint_types value_type> struct BNCH_SWT_ALIGN(benchmarksuite::device_ali
 };
 
 template<typename value_type, value_type static_divisor> struct division {
-	BNCH_SWT_DEVICE static value_type div(value_type value) {
+	BNCH_SWT_DEVICE static value_type div(value_type value) noexcept {
 		if constexpr (is_power_of_2(static_divisor)) {
 			static constexpr value_type shift_amount{ log2_ct(static_divisor) };
 			return value >> shift_amount;
@@ -248,9 +248,9 @@ template<typename value_type, value_type static_divisor> struct division {
 	}
 };
 
-constexpr uint64_t total_executions	   = 4000;
-constexpr uint64_t measured_executions = 40;
-constexpr size_t N_ELEMENTS			   = 4096ULL * 256ULL;
+inline constexpr uint64_t total_executions	   = 4000;
+inline constexpr uint64_t measured_executions = 40;
+inline constexpr size_t N_ELEMENTS			   = 4096ULL * 256ULL;
 
 template<typename value_type>
 void prepare_data(std::vector<value_type>& host_input, value_type*& d_input, value_type*& d_output_native, value_type*& d_output_magic, size_t n, size_t total_executions) {
@@ -267,7 +267,7 @@ void prepare_data(std::vector<value_type>& host_input, value_type*& d_input, val
 	cudaMemcpy(d_input, host_input.data(), total_elements * sizeof(value_type), cudaMemcpyHostToDevice);
 }
 
-template<typename value_type> void cleanup(value_type* d_input, value_type* d_output_native, value_type* d_output_magic) {
+template<typename value_type> void cleanup(value_type* d_input, value_type* d_output_native, value_type* d_output_magic) noexcept {
 	cudaFree(d_input);
 	cudaFree(d_output_native);
 	cudaFree(d_output_magic);
@@ -318,7 +318,7 @@ template<uint64_t divisor, typename value_type> __global__ void magic_div_kernel
 
 template<uint64_t TEST_DIVISOR, typename value_type> struct native_div_launcher {
 	static inline size_t current_iter = 0;
-	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, size_t n) {
+	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, size_t n) noexcept {
 		native_div_kernel<<<grid, block>>>(input + current_iter * n, output, TEST_DIVISOR, n);
 		cudaDeviceSynchronize();
 		++current_iter;
@@ -328,7 +328,7 @@ template<uint64_t TEST_DIVISOR, typename value_type> struct native_div_launcher 
 
 template<uint64_t TEST_DIVISOR, typename value_type> struct magic_div_rt_launcher {
 	static inline size_t current_iter = 0;
-	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, div_mod_logic_new<value_type> magic, size_t n) {
+	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, div_mod_logic_new<value_type> magic, size_t n) noexcept {
 		magic_div_kernel_rt<<<grid, block>>>(input + current_iter * n, output, magic, n);
 		cudaDeviceSynchronize();
 		++current_iter;
@@ -338,7 +338,7 @@ template<uint64_t TEST_DIVISOR, typename value_type> struct magic_div_rt_launche
 
 template<uint64_t TEST_DIVISOR, typename value_type> struct magic_div_rt_const_launcher {
 	static inline size_t current_iter = 0;
-	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, size_t n) {
+	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, size_t n) noexcept {
 		magic_div_kernel_rt_const<value_type><<<grid, block>>>(input + current_iter * n, output, n);
 		cudaDeviceSynchronize();
 		++current_iter;
@@ -348,7 +348,7 @@ template<uint64_t TEST_DIVISOR, typename value_type> struct magic_div_rt_const_l
 
 template<uint64_t TEST_DIVISOR, typename value_type> struct magic_div_ct_launcher {
 	static inline size_t current_iter = 0;
-	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, size_t n) {
+	static uint64_t impl(dim3 grid, dim3 block, value_type* input, value_type* output, size_t n) noexcept {
 		static constexpr auto kernel_ptr = &magic_div_kernel_ct<TEST_DIVISOR, value_type>;
 		kernel_ptr<<<grid, block>>>(input + current_iter * n, output, n);
 		cudaDeviceSynchronize();

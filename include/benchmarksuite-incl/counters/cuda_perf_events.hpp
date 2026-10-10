@@ -15,15 +15,15 @@ namespace benchmarksuite {
 
 	namespace internal {
 
-		BNCH_SWT_HOST static constexpr const char* get_function_name(std::source_location location = std::source_location::current()) {
+		BNCH_SWT_HOST constexpr const char* get_function_name(std::source_location location = std::source_location::current()) noexcept {
 			return location.function_name();
 		}
 
-		BNCH_SWT_HOST static constexpr uint64_t get_line(std::source_location location = std::source_location::current()) {
+		BNCH_SWT_HOST constexpr uint64_t get_line(std::source_location location = std::source_location::current()) noexcept {
 			return location.line();
 		}
 
-		template<benchmark_types> BNCH_SWT_HOST std::string get_device_name();
+		template<benchmark_types> std::string get_device_name();
 
 		BNCH_SWT_HOST bool check_cuda_status(const char* function_name = get_function_name(), uint64_t line = get_line()) {
 			if (auto result = cudaGetLastError(); result) {
@@ -34,7 +34,7 @@ namespace benchmarksuite {
 			}
 		}
 
-		template<> BNCH_SWT_HOST std::string get_device_name<benchmark_types::cuda>() {
+		template<> inline std::string get_device_name<benchmark_types::cuda>() {
 			int32_t device_count = 0;
 			cudaError_t error	 = cudaGetDeviceCount(&device_count);
 
@@ -61,7 +61,7 @@ namespace benchmarksuite {
 				other.stop_val	= {};
 			}
 
-			BNCH_SWT_HOST cuda_timer& operator=(cuda_timer&& other) noexcept {
+			BNCH_SWT_HOST cuda_timer& operator=(cuda_timer&& other) {
 				if (this != &other) {
 					cudaEventDestroy(start_val);
 					check_cuda_status();
@@ -75,19 +75,19 @@ namespace benchmarksuite {
 				return *this;
 			}
 
-			BNCH_SWT_HOST cuda_timer() noexcept {
+			BNCH_SWT_HOST cuda_timer() {
 				cudaEventCreate(&start_val);
 				check_cuda_status();
 				cudaEventCreate(&stop_val);
 				check_cuda_status();
 			}
 
-			BNCH_SWT_HOST void start() noexcept {
+			BNCH_SWT_HOST void start() {
 				cudaEventRecord(start_val, 0);
 				check_cuda_status();
 			}
 
-			BNCH_SWT_HOST void stop() noexcept {
+			BNCH_SWT_HOST void stop() {
 				cudaDeviceSynchronize();
 				check_cuda_status();
 				cudaEventRecord(stop_val, 0);
@@ -96,7 +96,7 @@ namespace benchmarksuite {
 				check_cuda_status();
 			}
 
-			BNCH_SWT_HOST double get_time() noexcept {
+			BNCH_SWT_HOST double get_time() {
 				float milliseconds = 0;
 				cudaEventElapsedTime(&milliseconds, start_val, stop_val);
 				check_cuda_status();
@@ -114,7 +114,7 @@ namespace benchmarksuite {
 			cudaEvent_t start_val{}, stop_val{};
 		};
 
-		template<typename function_type, typename... args_types> BNCH_SWT_GLOBAL static void profiling_wrapper(args_types&&... args) {
+		template<typename function_type, typename... args_types> BNCH_SWT_GLOBAL void profiling_wrapper(args_types&&... args) {
 			function_type::impl(args...);
 		}
 
