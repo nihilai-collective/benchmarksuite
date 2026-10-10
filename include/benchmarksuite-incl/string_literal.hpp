@@ -34,19 +34,19 @@ namespace benchmarksuite {
 			return return_data;
 		}
 
-		template<size_type size_new> BNCH_SWT_HOST consteval string_literal<size_new + size_val - 1> operator+(const string_literal<size_new>& str) const noexcept {
+		template<size_type size_new> BNCH_SWT_HOST consteval string_literal<size_new + size_val - 1> operator+(const string_literal<size_new>& str) const {
 			string_literal<size_new + size_val - 1> new_literal{};
 			std::copy_n(data_val, size(), new_literal.data_val);
 			std::copy_n(str.data_val, str.size(), new_literal.data_val + size());
 			return new_literal;
 		}
 
-		template<size_type size_new> BNCH_SWT_HOST consteval auto operator+(const value_type (&str)[size_new]) const noexcept {
+		template<size_type size_new> BNCH_SWT_HOST consteval auto operator+(const value_type (&str)[size_new]) const {
 			string_literal<size_new> new_literal{ str };
 			return *this + new_literal;
 		}
 
-		template<size_type size_new> BNCH_SWT_HOST consteval friend auto operator+(const value_type (&lhs)[size_new], const string_literal<size_val>& str) noexcept {
+		template<size_type size_new> BNCH_SWT_HOST consteval friend auto operator+(const value_type (&lhs)[size_new], const string_literal<size_val>& str) {
 			string_literal<size_new> new_literal{ lhs };
 			return new_literal + str;
 		}
@@ -71,24 +71,24 @@ namespace benchmarksuite {
 			return static_cast<size_type>(length);
 		}
 
-		template<typename string_types> BNCH_SWT_HOST constexpr operator string_types() const noexcept {
+		template<typename string_types> BNCH_SWT_HOST constexpr operator string_types() const {
 			string_types return_datas{ data_val, size() };
 			return return_datas;
 		}
 
-		BNCH_SWT_ALIGN(64) value_type data_val[size_val] {};
+		alignas(64) value_type data_val[size_val]{};
 	};
 
 	template<uint64_t size> string_literal(const char (&str)[size]) -> string_literal<size>;
 
-	template<uint64_t size> BNCH_SWT_HOST std::ostream& operator<<(std::ostream& os, const string_literal<size>& input) noexcept {
-		os.write(input.data_val, input.size());
+	template<uint64_t size> BNCH_SWT_HOST std::ostream& operator<<(std::ostream& os, const string_literal<size>& input) {
+		os.write(input.data_val, static_cast<std::streamsize>(input.size()));
 		return os;
 	}
 
 	namespace internal {
 
-		BNCH_SWT_HOST_DEVICE consteval uint64_t str_len(const char* input) noexcept {
+		BNCH_SWT_HOST_DEVICE consteval uint64_t str_len(const char* input) {
 			uint64_t len{};
 			while (input && input[len] != '\0') {
 				++len;
@@ -103,7 +103,7 @@ namespace benchmarksuite {
 			return sl;
 		}
 
-		template<typename value_type> constexpr uint64_t count_digits(value_type number) noexcept {
+		template<typename value_type> consteval uint64_t count_digits(value_type number) {
 			uint64_t count = 0;
 			if (static_cast<int64_t>(number) < 0) {
 				number *= -1;
@@ -116,7 +116,7 @@ namespace benchmarksuite {
 			return count;
 		}
 
-		template<int64_t number, uint64_t num_digits = count_digits(number)> constexpr string_literal<num_digits + 1> to_string_literal() noexcept {
+		template<int64_t number, uint64_t num_digits = count_digits(number)> consteval string_literal<num_digits + 1> to_string_literal() {
 			char buffer[num_digits + 1]{};
 			char* ptr = buffer + num_digits;
 			*ptr	  = '\0';
