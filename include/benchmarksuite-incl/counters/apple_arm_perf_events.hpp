@@ -47,15 +47,15 @@ namespace benchmarksuite::internal {
 		double branches{};
 		double cycles{};
 
-		BNCH_SWT_HOST performance_counters(double c, double b, double m, double i, double cm)
+		BNCH_SWT_HOST performance_counters(double c, double b, double m, double i, double cm) noexcept
 			: cache_misses{ cm }, branch_misses{ m }, instructions{ i }, branches{ b }, cycles{ c } {
 		}
 
-		BNCH_SWT_HOST performance_counters() : cache_misses{}, branch_misses{}, instructions{}, branches{}, cycles{} {
+		BNCH_SWT_HOST performance_counters() noexcept : cache_misses{}, branch_misses{}, instructions{}, branches{}, cycles{} {
 		}
 	};
 
-	static inline performance_counters operator-(const performance_counters& a, const performance_counters& b) {
+	inline performance_counters operator-(const performance_counters& a, const performance_counters& b) noexcept {
 		return performance_counters(a.cycles - b.cycles, a.branches - b.branches, a.branch_misses - b.branch_misses, a.instructions - b.instructions,
 			a.cache_misses - b.cache_misses);
 	}
@@ -183,7 +183,7 @@ namespace benchmarksuite::internal {
 			loaded_symbols(const loaded_symbols&)			 = delete;
 			loaded_symbols& operator=(const loaded_symbols&) = delete;
 
-			~loaded_symbols() {
+			~loaded_symbols() noexcept {
 				if (lib_handle_kperf) {
 					dlclose(lib_handle_kperf);
 				}
