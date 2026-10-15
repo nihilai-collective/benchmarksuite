@@ -76,22 +76,6 @@ template<typename value_type> struct jsonifier_baseline_writer {
 	}
 };
 
-#if JSONIFIER_CONFIGURED_AVX_TIER >= 2
-template<typename value_type> struct jsonifier_avx2_writer {
-	BNCH_SWT_HOST static uint8_t* write(uint8_t* out, value_type value) {
-		return jsonifier::avx2::zmij::detail::write(value, out);
-	}
-};
-#endif
-
-#if JSONIFIER_CONFIGURED_AVX_TIER >= 3
-template<typename value_type> struct jsonifier_avx512_writer {
-	BNCH_SWT_HOST static uint8_t* write(uint8_t* out, value_type value) {
-		return jsonifier::avx512::zmij::detail::write(value, out);
-	}
-};
-#endif
-
 template<dataset_kind kind> struct zmij_upstream_benchmark {
 	BNCH_SWT_HOST static uint64_t impl() {
 		char* const start = upstream_buffer.data();
@@ -194,12 +178,6 @@ using stage_type = benchmarksuite::benchmark_stage<"zmij-comparison", benchmarks
 template<dataset_kind kind, benchmarksuite::string_literal test_name> void run_dataset() {
 	stage_type::run_benchmark<test_name, "zmij-upstream", zmij_upstream_benchmark<kind>>();
 	stage_type::run_benchmark<test_name, "jsonifier-zmij", jsonifier_benchmark<kind, jsonifier_baseline_writer>>();
-#if JSONIFIER_CONFIGURED_AVX_TIER >= 2
-	stage_type::run_benchmark<test_name, "jsonifier-zmij-avx2", jsonifier_benchmark<kind, jsonifier_avx2_writer>>();
-#endif
-#if JSONIFIER_CONFIGURED_AVX_TIER >= 3
-	stage_type::run_benchmark<test_name, "jsonifier-zmij-avx512", jsonifier_benchmark<kind, jsonifier_avx512_writer>>();
-#endif
 	std::cout << stage_type::get_test_results(test_name.operator std::string_view()).to_markdown() << std::endl;
 }
 
@@ -211,12 +189,6 @@ int32_t main() {
 	std::cout << "JSONIFIER_CONFIGURED_AVX_TIER=" << JSONIFIER_CONFIGURED_AVX_TIER << "\n";
 	uint64_t verification_failures = verify_upstream_round_trips();
 	verification_failures += verify_against_upstream<jsonifier_baseline_writer>("jsonifier-zmij");
-#if JSONIFIER_CONFIGURED_AVX_TIER >= 2
-	verification_failures += verify_against_upstream<jsonifier_avx2_writer>("jsonifier-zmij-avx2");
-#endif
-#if JSONIFIER_CONFIGURED_AVX_TIER >= 3
-	verification_failures += verify_against_upstream<jsonifier_avx512_writer>("jsonifier-zmij-avx512");
-#endif
 	std::cout << "Total verification failures: " << verification_failures << "\n" << std::endl;
 
 	benchmarksuite::pin_for_benchmark();
