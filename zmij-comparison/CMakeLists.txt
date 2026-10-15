@@ -16,7 +16,7 @@ add_library(zmij-upstream STATIC
     ${zmij_upstream_SOURCE_DIR}/zmij-int.cc
 )
 target_include_directories(zmij-upstream PUBLIC ${zmij_upstream_SOURCE_DIR})
-target_compile_features(zmij-upstream PUBLIC cxx_std_23)
+set_target_properties(zmij-upstream PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_link_libraries(zmij-upstream PRIVATE voided_hw::bnch_swt_cpu)
 
 if(EXISTS "${BNCH_SWT_JSONIFIER_DIR}/CMakeLists.txt")
