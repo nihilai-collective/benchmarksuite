@@ -1,0 +1,13 @@
+{
+  "name": "nihilai-collective/benchmarksuite-vcpkg-builder",
+  "description": "VCPKG release builder for benchmarksuite",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "benchmarksuite\\packager\\": "classes/packager/"
+    }
+  },
+  "require": {
+    "php": ">=8.1"
+  }
+}

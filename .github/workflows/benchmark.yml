@@ -1,0 +1,135 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Nihilai Collective Corp
+# https://github.com/nihilai-collective/benchmarksuite
+# .github/workflows/benchmark.yml
+
+name: Benchmark
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: clang
+            name: "Ubuntu Clang"
+          - os: ubuntu-latest
+            compiler: gcc
+            name: "Ubuntu GNU"
+          - os: macos-latest
+            compiler: clang
+            name: "macOS Clang"
+          - os: macos-latest
+            compiler: gcc
+            name: "macOS GNU"
+          - os: windows-latest
+            compiler: msvc
+            name: "Windows MSVC"
+
+    runs-on: ${{ matrix.os }}
+    name: Build on ${{ matrix.name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Setup Clang (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'clang'
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod u+x llvm.sh
+          DEV_VERSION=$(apt-cache search '^clang-[0-9]+$' | grep -oP 'clang-\K[0-9]+' | sort -n | tail -1)
+          sudo ./llvm.sh $DEV_VERSION
+          echo "CXX_BIN=/usr/bin/clang++-$DEV_VERSION" >> $GITHUB_ENV
+
+      - name: Setup GNU (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'gcc'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          DEV_VERSION=$(apt-cache search '^g\+\+-[0-9]+$' | awk '{print $1}' | sort -V | tail -n 1 | sed 's/g++-//')
+          sudo apt-get install -y gcc-$DEV_VERSION g++-$DEV_VERSION
+          echo "CXX_BIN=/usr/bin/g++-$DEV_VERSION" >> $GITHUB_ENV
+
+      - name: Setup Clang (macOS)
+        if: matrix.os == 'macos-latest' && matrix.compiler == 'clang'
+        run: |
+          brew install llvm
+          echo "CXX_BIN=$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+
+      - name: Setup GNU (macOS)
+        if: matrix.os == 'macos-latest' && matrix.compiler == 'gcc'
+        run: |
+          brew install gcc
+          GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
+          echo "CXX_BIN=g++-$GCC_VERSION" >> $GITHUB_ENV
+
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure CMake (Unix)
+        if: runner.os != 'Windows'
+        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ env.CXX_BIN }} -DBNCH_SWT_BENCHMARKS=TRUE -DPRINT_ASSEMBLY=TRUE
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: cmake -S . -B ./Build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl -DBNCH_SWT_BENCHMARKS=TRUE -DPRINT_ASSEMBLY=TRUE
+
+      - name: Build
+        run: cmake --build ./Build --config=Release -v
+
+      - name: Find and Print Assembly Files (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          echo "=== Searching for assembly files ==="
+          find ./Build -name "*.asm" -type f
+          echo ""
+          echo "=== Assembly file details ==="
+          find ./Build -name "*.asm" -type f -exec sh -c 'echo "File: {}"; ls -lh "{}"; echo "Lines: $(wc -l < "{}")"; echo ""' \;
+          echo ""
+          echo "=== Printing COMPLETE assembly files ==="
+          find ./Build -name "*.asm" -type f -exec sh -c 'echo "========== {} =========="; cat "{}"; echo ""; echo "========== END OF {} =========="; echo ""' \;
+
+      - name: Find and Print Assembly Files (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "=== Searching for assembly files ==="
+          $asmFiles = Get-ChildItem -Path ./Build -Recurse -Filter "*.cod" -File -ErrorAction SilentlyContinue
+          if ($null -eq $asmFiles -or $asmFiles.Count -eq 0) {
+            echo "NO .COD FILES FOUND!"
+          } else {
+            echo "Found $($asmFiles.Count) assembly file(s):"
+            $asmFiles | ForEach-Object { echo $_.FullName }
+            echo ""
+            echo "=== Printing COMPLETE assembly files ==="
+            $asmFiles | ForEach-Object {
+              echo "========== $($_.FullName) =========="
+              Get-Content $_.FullName
+              echo "========== END OF $($_.FullName) =========="
+              echo ""
+            }
+          }
+
+      - name: Install
+        run: |
+          ${{ runner.os != 'Windows' && 'sudo' || '' }} cmake --install ./Build --config=Release
+
+      - name: Run (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          sudo chmod +x /usr/local/bin/benchmarksuite-main
+          sudo /usr/local/bin/benchmarksuite-main
+
+      - name: Run (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & "C:/Program Files (x86)/benchmarksuite/bin/benchmarksuite-main.exe"

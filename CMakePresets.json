@@ -1,0 +1,159 @@
+﻿{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "${hostSystemName}-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/build/${presetName}",
+      "toolchainFile": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "debug-base",
+      "hidden": true,
+      "inherits": "${hostSystemName}-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-base",
+      "hidden": true,
+      "inherits": "${hostSystemName}-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "debug-benchmarksuite-cpu",
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true
+      }
+    },
+    {
+      "name": "release-benchmarksuite-cpu",
+      "inherits": "release-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true
+      }
+    },
+    {
+      "name": "debug-dev-benchmarksuite-cpu",
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true,
+        "BNCH_SWT_BENCHMARKS": true
+      }
+    },
+    {
+      "name": "release-unit-tests-benchmarksuite-cpu",
+      "inherits": "release-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true,
+        "BNCH_SWT_UNIT_TESTS": true
+      }
+    },
+    {
+      "name": "debug-unit-tests-benchmarksuite-cpu",
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true,
+        "BNCH_SWT_UNIT_TESTS": true
+      }
+    },
+    {
+      "name": "release-dev-benchmarksuite-cpu",
+      "inherits": "release-base",
+      "cacheVariables": {
+        "BNCH_SWT_CPU": true,
+        "BNCH_SWT_BENCHMARKS": true
+      }
+    },
+    {
+      "name": "debug-benchmarksuite-cuda",
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "BNCH_SWT_CUDA": true
+      }
+    },
+    {
+      "name": "release-benchmarksuite-cuda",
+      "inherits": "release-base",
+      "cacheVariables": {
+        "BNCH_SWT_CUDA": true
+      }
+    },
+
+    {
+      "name": "debug-dev-benchmarksuite-cuda",
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "BNCH_SWT_CUDA": true,
+        "BNCH_SWT_BENCHMARKS": true
+      }
+    },
+    {
+      "name": "release-dev-benchmarksuite-cuda",
+      "inherits": "release-base",
+      "cacheVariables": {
+        "BNCH_SWT_CUDA": true,
+        "BNCH_SWT_BENCHMARKS": true
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioRemoteSettings/cmake/1.0": {
+          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+        }
+      }
+    },
+    {
+      "name": "macos-debug",
+      "displayName": "macOS Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioRemoteSettings/cmake/1.0": {
+          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+        }
+      }
+    }
+  ]
+}
