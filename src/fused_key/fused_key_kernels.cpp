@@ -4,6 +4,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstring>
+#include <type_traits>
 #include <limits>
 #include <utility>
 
@@ -162,6 +163,35 @@ namespace fused_key {
 			}
 		};
 
+		template<typename value_type> consteval value_type packBytes(std::string_view text, std::size_t offset) {
+			uint64_t value{};
+			for (std::size_t i = 0; i < sizeof(value_type); ++i) {
+				value |= static_cast<uint64_t>(static_cast<uint8_t>(text[offset + i])) << (i * 8);
+			}
+			return static_cast<value_type>(value);
+		}
+
+		template<uint64_t byte_count> using uint_for_bytes_t =
+			std::conditional_t<byte_count == 1, uint8_t, std::conditional_t<byte_count == 2, uint16_t, std::conditional_t<byte_count == 4, uint32_t, uint64_t>>>;
+
+		template<const std::string_view& text>
+			requires(text.size() > 8 && text.size() < 16)
+		struct comparator_u64_tight_tail {
+			using tail_type = uint_for_bytes_t<std::bit_ceil(text.size() - 8)>;
+			static constexpr uint64_t newCount{ text.size() };
+			static constexpr uint64_t tailBytes{ sizeof(tail_type) };
+			static constexpr uint64_t loValuesNew{ packEight(text, 0) };
+			static constexpr tail_type tailValuesNew{ packBytes<tail_type>(text, newCount - tailBytes) };
+
+			FUSED_KEY_INLINE static const char* impl(const char* __restrict input) noexcept {
+				uint64_t lo;
+				tail_type tail;
+				pow2MemcpyWrapper<8>(&lo, input);
+				pow2MemcpyWrapper<tailBytes>(&tail, input + newCount - tailBytes);
+				return !((lo ^ loValuesNew) | static_cast<uint64_t>(static_cast<tail_type>(tail ^ tailValuesNew))) ? input + newCount : nullptr;
+			}
+		};
+
 		template<const std::string_view& text, typename copy_type>
 			requires(text.size() > 8 && text.size() < 16)
 		struct comparator_xmm {
@@ -279,6 +309,10 @@ namespace fused_key {
 		return scan<comparator_u64<key14>>(corpus);
 	}
 
+	uint64_t scanU64TightTailKey9(const key_corpus& corpus) noexcept {
+		return scan<comparator_u64_tight_tail<key9>>(corpus);
+	}
+
 	uint64_t scanXmmKey9(const key_corpus& corpus) noexcept {
 		return scan<comparator_xmm<key9, copy_bucketed>>(corpus);
 	}
@@ -291,6 +325,10 @@ namespace fused_key {
 		return scan<comparator_xmm<key9, copy_pow2_decomp>>(corpus);
 	}
 
+	uint64_t scanU64TightTailKey11(const key_corpus& corpus) noexcept {
+		return scan<comparator_u64_tight_tail<key11>>(corpus);
+	}
+
 	uint64_t scanXmmKey11(const key_corpus& corpus) noexcept {
 		return scan<comparator_xmm<key11, copy_bucketed>>(corpus);
 	}
@@ -301,6 +339,10 @@ namespace fused_key {
 
 	uint64_t scanXmmPow2Key11(const key_corpus& corpus) noexcept {
 		return scan<comparator_xmm<key11, copy_pow2_decomp>>(corpus);
+	}
+
+	uint64_t scanU64TightTailKey14(const key_corpus& corpus) noexcept {
+		return scan<comparator_u64_tight_tail<key14>>(corpus);
 	}
 
 	uint64_t scanXmmKey14(const key_corpus& corpus) noexcept {

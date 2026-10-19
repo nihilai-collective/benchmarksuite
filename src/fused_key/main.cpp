@@ -160,8 +160,10 @@ namespace {
 
 	inline constexpr uint64_t keyCount{ 16384 };
 
-	template<benchmarksuite::string_literal test_name, auto u64_scan, auto xmm_scan, auto xmm_jsonifier_memcpy_scan, auto xmm_pow2_scan> void runSet(const corpus_storage& corpus) {
+	template<benchmarksuite::string_literal test_name, auto u64_scan, auto u64_tight_tail_scan, auto xmm_scan, auto xmm_jsonifier_memcpy_scan, auto xmm_pow2_scan>
+	void runSet(const corpus_storage& corpus) {
 		stage_type::run_benchmark<test_name, "u64-overlap", scan_functor<u64_scan>>(corpus);
+		stage_type::run_benchmark<test_name, "u64-tight-tail", scan_functor<u64_tight_tail_scan>>(corpus);
 		stage_type::run_benchmark<test_name, "xmm-memcpy-upto", scan_functor<xmm_scan>>(corpus);
 		stage_type::run_benchmark<test_name, "xmm-jsonifier-memcpy", scan_functor<xmm_jsonifier_memcpy_scan>>(corpus);
 		stage_type::run_benchmark<test_name, "xmm-pow2-decomp", scan_functor<xmm_pow2_scan>>(corpus);
@@ -181,9 +183,9 @@ int32_t main() {
 		return 0;
 	}
 	benchmarksuite::pin_for_benchmark();
-	runSet<"9-byte-key", fused_key::scanU64Key9, fused_key::scanXmmKey9, fused_key::scanXmmJsonifierMemcpyKey9, fused_key::scanXmmPow2Key9>(buildCorpus(fused_key::key9, keyCount, 0x9E3779B97F4A7C15ull));
-	runSet<"11-byte-key", fused_key::scanU64Key11, fused_key::scanXmmKey11, fused_key::scanXmmJsonifierMemcpyKey11, fused_key::scanXmmPow2Key11>(buildCorpus(fused_key::key11, keyCount, 0xBF58476D1CE4E5B9ull));
-	runSet<"14-byte-key", fused_key::scanU64Key14, fused_key::scanXmmKey14, fused_key::scanXmmJsonifierMemcpyKey14, fused_key::scanXmmPow2Key14>(buildCorpus(fused_key::key14, keyCount, 0x94D049BB133111EBull));
+	runSet<"9-byte-key", fused_key::scanU64Key9, fused_key::scanU64TightTailKey9, fused_key::scanXmmKey9, fused_key::scanXmmJsonifierMemcpyKey9, fused_key::scanXmmPow2Key9>(buildCorpus(fused_key::key9, keyCount, 0x9E3779B97F4A7C15ull));
+	runSet<"11-byte-key", fused_key::scanU64Key11, fused_key::scanU64TightTailKey11, fused_key::scanXmmKey11, fused_key::scanXmmJsonifierMemcpyKey11, fused_key::scanXmmPow2Key11>(buildCorpus(fused_key::key11, keyCount, 0xBF58476D1CE4E5B9ull));
+	runSet<"14-byte-key", fused_key::scanU64Key14, fused_key::scanU64TightTailKey14, fused_key::scanXmmKey14, fused_key::scanXmmJsonifierMemcpyKey14, fused_key::scanXmmPow2Key14>(buildCorpus(fused_key::key14, keyCount, 0x94D049BB133111EBull));
 	runMixedSet<"mixed-9-to-15-byte-keys", fused_key::scanU64Mixed, fused_key::scanXmmMixed, fused_key::scanXmmJsonifierMemcpyMixed>(buildMixedCorpus(keyCount, 0xD6E8FEB86659FD93ull));
 	std::cout << "Fused-key comparison tier: " << tierName << std::endl;
 	for (const char* testName: { "9-byte-key", "11-byte-key", "14-byte-key", "mixed-9-to-15-byte-keys" }) {

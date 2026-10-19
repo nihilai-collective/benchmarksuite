@@ -39,6 +39,9 @@ namespace fused_key {
 	uint64_t scanU64Key9(const key_corpus& corpus) noexcept;
 	uint64_t scanU64Key11(const key_corpus& corpus) noexcept;
 	uint64_t scanU64Key14(const key_corpus& corpus) noexcept;
+	uint64_t scanU64TightTailKey9(const key_corpus& corpus) noexcept;
+	uint64_t scanU64TightTailKey11(const key_corpus& corpus) noexcept;
+	uint64_t scanU64TightTailKey14(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmKey9(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmKey11(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmKey14(const key_corpus& corpus) noexcept;
