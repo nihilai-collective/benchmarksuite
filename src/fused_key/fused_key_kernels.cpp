@@ -17,8 +17,15 @@
 
 #if defined(_MSC_VER) && !defined(__clang__)
 	#define FUSED_KEY_INLINE [[msvc::forceinline]] inline
+	#define FUSED_KEY_ASSUME(condition) __assume(condition)
 #else
 	#define FUSED_KEY_INLINE inline __attribute__((always_inline))
+	#define FUSED_KEY_ASSUME(condition) \
+		do { \
+			if (!(condition)) { \
+				__builtin_unreachable(); \
+			} \
+		} while (false)
 #endif
 
 namespace fused_key {
@@ -203,6 +210,7 @@ namespace fused_key {
 
 		struct runtime_comparator_u64 {
 			FUSED_KEY_INLINE static const char* impl(const char* __restrict input, uint64_t length, uint64_t expectedLo, uint64_t expectedHi) noexcept {
+				FUSED_KEY_ASSUME(length >= 9 && length <= 15);
 				uint64_t lo;
 				uint64_t hi;
 				pow2MemcpyWrapper<8>(&lo, input);
@@ -214,6 +222,7 @@ namespace fused_key {
 		template<typename copy_type> struct runtime_comparator_xmm {
 #if FUSED_KEY_NEON
 			FUSED_KEY_INLINE static const char* impl(const char* __restrict input, uint64_t length, const expected_block& expected) noexcept {
+				FUSED_KEY_ASSUME(length >= 9 && length <= 15);
 				uint8x16_t data1{ vdupq_n_u8(0) };
 				copy_type::impl(&data1, input, length);
 				const uint8x16_t data2{ vld1q_u8(expected.bytes) };
@@ -221,6 +230,7 @@ namespace fused_key {
 			}
 #else
 			FUSED_KEY_INLINE static const char* impl(const char* __restrict input, uint64_t length, const expected_block& expected) noexcept {
+				FUSED_KEY_ASSUME(length >= 9 && length <= 15);
 				__m128i data1{ _mm_setzero_si128() };
 				copy_type::impl(&data1, input, length);
 				const __m128i data2{ _mm_load_si128(static_cast<const __m128i*>(static_cast<const void*>(expected.bytes))) };
