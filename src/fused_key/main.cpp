@@ -14,13 +14,13 @@
 #endif
 
 #if FUSED_KEY_TIER == 0
-using stage_type = benchmarksuite::benchmark_stage<"fused-key-compare-neon", benchmarksuite::stage_config_data{ .max_iteration_count = 20000 }>;
+using stage_type = benchmarksuite::benchmark_stage<"fused-key-compare-neon", benchmarksuite::stage_config_data{ .include_non_converged_results = true, .max_iteration_count = 20000 }>;
 inline constexpr std::string_view tierName{ "NEON" };
 #elif FUSED_KEY_TIER == 1
-using stage_type = benchmarksuite::benchmark_stage<"fused-key-compare-avx2", benchmarksuite::stage_config_data{ .max_iteration_count = 20000 }>;
+using stage_type = benchmarksuite::benchmark_stage<"fused-key-compare-avx2", benchmarksuite::stage_config_data{ .include_non_converged_results = true, .max_iteration_count = 20000 }>;
 inline constexpr std::string_view tierName{ "AVX2" };
 #else
-using stage_type = benchmarksuite::benchmark_stage<"fused-key-compare-avx512", benchmarksuite::stage_config_data{ .max_iteration_count = 20000 }>;
+using stage_type = benchmarksuite::benchmark_stage<"fused-key-compare-avx512", benchmarksuite::stage_config_data{ .include_non_converged_results = true, .max_iteration_count = 20000 }>;
 inline constexpr std::string_view tierName{ "AVX512" };
 #endif
 
