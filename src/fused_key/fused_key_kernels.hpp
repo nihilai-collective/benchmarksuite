@@ -21,5 +21,11 @@ namespace fused_key {
 	uint64_t scanXmmKey9(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmKey11(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmKey14(const key_corpus& corpus) noexcept;
+	uint64_t scanXmmJsonifierMemcpyKey9(const key_corpus& corpus) noexcept;
+	uint64_t scanXmmJsonifierMemcpyKey11(const key_corpus& corpus) noexcept;
+	uint64_t scanXmmJsonifierMemcpyKey14(const key_corpus& corpus) noexcept;
+	uint64_t scanXmmPow2Key9(const key_corpus& corpus) noexcept;
+	uint64_t scanXmmPow2Key11(const key_corpus& corpus) noexcept;
+	uint64_t scanXmmPow2Key14(const key_corpus& corpus) noexcept;
 
 }

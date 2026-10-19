@@ -4,6 +4,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <utility>
 
 #if defined(__aarch64__) || defined(_M_ARM64)
@@ -108,6 +109,36 @@ namespace fused_key {
 			dispatchBuckets<0, topBucketIndex<max_bytes>>(static_cast<std::byte*>(dst), static_cast<const std::byte*>(src), byte_count);
 		}
 
+		FUSED_KEY_INLINE void jsonifierMemcpy(void* __restrict dst, const void* __restrict src, uint64_t byte_count) noexcept {
+			jsonifierMemcpyUpTo<std::numeric_limits<uint64_t>::max()>(dst, src, byte_count);
+		}
+
+		template<uint64_t remaining, uint64_t offset> FUSED_KEY_INLINE void pow2DecompMemcpy(std::byte* __restrict dst, const std::byte* __restrict src) noexcept {
+			if constexpr (remaining > 0) {
+				static constexpr uint64_t chunk{ std::bit_floor(remaining) };
+				pow2MemcpyWrapper<chunk>(dst + offset, src + offset);
+				pow2DecompMemcpy<remaining - chunk, offset + chunk>(dst, src);
+			}
+		}
+
+		struct copy_bucketed {
+			template<uint64_t byte_count> FUSED_KEY_INLINE static void impl(void* __restrict dst, const void* __restrict src) noexcept {
+				jsonifierMemcpyUpTo<15>(dst, src, byte_count);
+			}
+		};
+
+		struct copy_jsonifier_memcpy {
+			template<uint64_t byte_count> FUSED_KEY_INLINE static void impl(void* __restrict dst, const void* __restrict src) noexcept {
+				jsonifierMemcpy(dst, src, byte_count);
+			}
+		};
+
+		struct copy_pow2_decomp {
+			template<uint64_t byte_count> FUSED_KEY_INLINE static void impl(void* __restrict dst, const void* __restrict src) noexcept {
+				pow2DecompMemcpy<byte_count, 0>(static_cast<std::byte*>(dst), static_cast<const std::byte*>(src));
+			}
+		};
+
 		template<const std::string_view& text>
 			requires(text.size() > 8 && text.size() < 16)
 		struct comparator_u64 {
@@ -124,7 +155,7 @@ namespace fused_key {
 			}
 		};
 
-		template<const std::string_view& text>
+		template<const std::string_view& text, typename copy_type>
 			requires(text.size() > 8 && text.size() < 16)
 		struct comparator_xmm {
 			static constexpr uint64_t newCount{ text.size() };
@@ -133,14 +164,14 @@ namespace fused_key {
 #if FUSED_KEY_NEON
 			FUSED_KEY_INLINE static const char* impl(const char* __restrict input) noexcept {
 				uint8x16_t data1{ vdupq_n_u8(0) };
-				jsonifierMemcpyUpTo<15>(&data1, input, newCount);
+				copy_type::template impl<newCount>(&data1, input);
 				const uint8x16_t data2{ vld1q_u8(valuesNew.data()) };
 				return vmaxvq_u8(veorq_u8(data1, data2)) == 0 ? input + newCount : nullptr;
 			}
 #else
 			FUSED_KEY_INLINE static const char* impl(const char* __restrict input) noexcept {
 				__m128i data1{ _mm_setzero_si128() };
-				jsonifierMemcpyUpTo<15>(&data1, input, newCount);
+				copy_type::template impl<newCount>(&data1, input);
 				const __m128i data2{ _mm_load_si128(static_cast<const __m128i*>(static_cast<const void*>(valuesNew.data()))) };
 				const __m128i diff{ _mm_xor_si128(data1, data2) };
 				return _mm_testz_si128(diff, diff) ? input + newCount : nullptr;
@@ -173,15 +204,39 @@ namespace fused_key {
 	}
 
 	uint64_t scanXmmKey9(const key_corpus& corpus) noexcept {
-		return scan<comparator_xmm<key9>>(corpus);
+		return scan<comparator_xmm<key9, copy_bucketed>>(corpus);
+	}
+
+	uint64_t scanXmmJsonifierMemcpyKey9(const key_corpus& corpus) noexcept {
+		return scan<comparator_xmm<key9, copy_jsonifier_memcpy>>(corpus);
+	}
+
+	uint64_t scanXmmPow2Key9(const key_corpus& corpus) noexcept {
+		return scan<comparator_xmm<key9, copy_pow2_decomp>>(corpus);
 	}
 
 	uint64_t scanXmmKey11(const key_corpus& corpus) noexcept {
-		return scan<comparator_xmm<key11>>(corpus);
+		return scan<comparator_xmm<key11, copy_bucketed>>(corpus);
+	}
+
+	uint64_t scanXmmJsonifierMemcpyKey11(const key_corpus& corpus) noexcept {
+		return scan<comparator_xmm<key11, copy_jsonifier_memcpy>>(corpus);
+	}
+
+	uint64_t scanXmmPow2Key11(const key_corpus& corpus) noexcept {
+		return scan<comparator_xmm<key11, copy_pow2_decomp>>(corpus);
 	}
 
 	uint64_t scanXmmKey14(const key_corpus& corpus) noexcept {
-		return scan<comparator_xmm<key14>>(corpus);
+		return scan<comparator_xmm<key14, copy_bucketed>>(corpus);
+	}
+
+	uint64_t scanXmmJsonifierMemcpyKey14(const key_corpus& corpus) noexcept {
+		return scan<comparator_xmm<key14, copy_jsonifier_memcpy>>(corpus);
+	}
+
+	uint64_t scanXmmPow2Key14(const key_corpus& corpus) noexcept {
+		return scan<comparator_xmm<key14, copy_pow2_decomp>>(corpus);
 	}
 
 }
