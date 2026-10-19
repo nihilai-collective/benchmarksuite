@@ -29,15 +29,24 @@ namespace {
 	struct corpus_storage {
 		std::string buffer{};
 		std::vector<uint32_t> offsets{};
+		std::vector<uint8_t> keyIds{};
 		fused_key::key_corpus view{};
 		uint64_t keyBytes{};
 	};
 
+	void appendValue(std::string& buffer, std::mt19937_64& rng) {
+		std::uniform_int_distribution<uint64_t> digitCount{ 1, 12 };
+		std::uniform_int_distribution<uint32_t> digit{ 0, 9 };
+		const uint64_t digits{ digitCount(rng) };
+		for (uint64_t d = 0; d < digits; ++d) {
+			buffer.push_back(static_cast<char>('0' + digit(rng)));
+		}
+		buffer.push_back(',');
+	}
+
 	corpus_storage buildCorpus(std::string_view key, uint64_t keyCount, uint64_t seed) {
 		corpus_storage corpus{};
 		std::mt19937_64 rng{ seed };
-		std::uniform_int_distribution<uint64_t> digitCount{ 1, 12 };
-		std::uniform_int_distribution<uint32_t> digit{ 0, 9 };
 		std::uniform_int_distribution<uint64_t> mismatch{ 0, 15 };
 		corpus.buffer.reserve(keyCount * (key.size() + 16) + 64);
 		corpus.offsets.reserve(keyCount);
@@ -49,15 +58,38 @@ namespace {
 				keyCopy[flipIndex] = static_cast<char>(keyCopy[flipIndex] ^ 0x20);
 			}
 			corpus.buffer += keyCopy;
-			const uint64_t digits{ digitCount(rng) };
-			for (uint64_t d = 0; d < digits; ++d) {
-				corpus.buffer.push_back(static_cast<char>('0' + digit(rng)));
-			}
-			corpus.buffer.push_back(',');
+			appendValue(corpus.buffer, rng);
 		}
 		corpus.buffer.append(64, ' ');
 		corpus.view	   = fused_key::key_corpus{ corpus.buffer.data(), corpus.offsets.data(), corpus.offsets.size() };
 		corpus.keyBytes = keyCount * key.size();
+		return corpus;
+	}
+
+	corpus_storage buildMixedCorpus(uint64_t keyCount, uint64_t seed) {
+		corpus_storage corpus{};
+		std::mt19937_64 rng{ seed };
+		std::uniform_int_distribution<uint64_t> keyChoice{ 0, fused_key::mixedKeys.size() - 1 };
+		std::uniform_int_distribution<uint64_t> mismatch{ 0, 15 };
+		corpus.buffer.reserve(keyCount * 32 + 64);
+		corpus.offsets.reserve(keyCount);
+		corpus.keyIds.reserve(keyCount);
+		for (uint64_t i = 0; i < keyCount; ++i) {
+			const uint64_t keyId{ keyChoice(rng) };
+			const std::string_view key{ fused_key::mixedKeys[keyId] };
+			corpus.offsets.emplace_back(static_cast<uint32_t>(corpus.buffer.size()));
+			corpus.keyIds.emplace_back(static_cast<uint8_t>(keyId));
+			std::string keyCopy{ key };
+			if (mismatch(rng) == 0) {
+				const uint64_t flipIndex{ 1 + (i % (keyCopy.size() - 3)) };
+				keyCopy[flipIndex] = static_cast<char>(keyCopy[flipIndex] ^ 0x20);
+			}
+			corpus.buffer += keyCopy;
+			corpus.keyBytes += key.size();
+			appendValue(corpus.buffer, rng);
+		}
+		corpus.buffer.append(64, ' ');
+		corpus.view = fused_key::key_corpus{ corpus.buffer.data(), corpus.offsets.data(), corpus.offsets.size(), corpus.keyIds.data() };
 		return corpus;
 	}
 
@@ -97,8 +129,7 @@ namespace {
 
 	inline constexpr uint64_t keyCount{ 16384 };
 
-	template<benchmarksuite::string_literal test_name, auto u64_scan, auto xmm_scan, auto xmm_jsonifier_memcpy_scan, auto xmm_pow2_scan> void runSet(std::string_view key, uint64_t seed) {
-		const corpus_storage corpus{ buildCorpus(key, keyCount, seed) };
+	template<benchmarksuite::string_literal test_name, auto u64_scan, auto xmm_scan, auto xmm_jsonifier_memcpy_scan, auto xmm_pow2_scan> void runSet(const corpus_storage& corpus) {
 		stage_type::run_benchmark<test_name, "u64-overlap", scan_functor<u64_scan>>(corpus);
 		stage_type::run_benchmark<test_name, "xmm-memcpy-upto", scan_functor<xmm_scan>>(corpus);
 		stage_type::run_benchmark<test_name, "xmm-jsonifier-memcpy", scan_functor<xmm_jsonifier_memcpy_scan>>(corpus);
@@ -113,11 +144,13 @@ int32_t main() {
 		return 0;
 	}
 	benchmarksuite::pin_for_benchmark();
-	runSet<"9-byte-key", fused_key::scanU64Key9, fused_key::scanXmmKey9, fused_key::scanXmmJsonifierMemcpyKey9, fused_key::scanXmmPow2Key9>(fused_key::key9, 0x9E3779B97F4A7C15ull);
-	runSet<"11-byte-key", fused_key::scanU64Key11, fused_key::scanXmmKey11, fused_key::scanXmmJsonifierMemcpyKey11, fused_key::scanXmmPow2Key11>(fused_key::key11, 0xBF58476D1CE4E5B9ull);
-	runSet<"14-byte-key", fused_key::scanU64Key14, fused_key::scanXmmKey14, fused_key::scanXmmJsonifierMemcpyKey14, fused_key::scanXmmPow2Key14>(fused_key::key14, 0x94D049BB133111EBull);
+	runSet<"9-byte-key", fused_key::scanU64Key9, fused_key::scanXmmKey9, fused_key::scanXmmJsonifierMemcpyKey9, fused_key::scanXmmPow2Key9>(buildCorpus(fused_key::key9, keyCount, 0x9E3779B97F4A7C15ull));
+	runSet<"11-byte-key", fused_key::scanU64Key11, fused_key::scanXmmKey11, fused_key::scanXmmJsonifierMemcpyKey11, fused_key::scanXmmPow2Key11>(buildCorpus(fused_key::key11, keyCount, 0xBF58476D1CE4E5B9ull));
+	runSet<"14-byte-key", fused_key::scanU64Key14, fused_key::scanXmmKey14, fused_key::scanXmmJsonifierMemcpyKey14, fused_key::scanXmmPow2Key14>(buildCorpus(fused_key::key14, keyCount, 0x94D049BB133111EBull));
+	runSet<"mixed-9-to-15-byte-keys", fused_key::scanU64Mixed, fused_key::scanXmmMixed, fused_key::scanXmmJsonifierMemcpyMixed, fused_key::scanXmmPow2Mixed>(
+		buildMixedCorpus(keyCount, 0xD6E8FEB86659FD93ull));
 	std::cout << "Fused-key comparison tier: " << tierName << std::endl;
-	for (const char* testName: { "9-byte-key", "11-byte-key", "14-byte-key" }) {
+	for (const char* testName: { "9-byte-key", "11-byte-key", "14-byte-key", "mixed-9-to-15-byte-keys" }) {
 		std::cout << stage_type::get_test_results(testName).to_markdown(true, true) << std::endl;
 	}
 	return 0;

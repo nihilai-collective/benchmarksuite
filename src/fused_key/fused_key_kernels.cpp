@@ -189,6 +189,46 @@ namespace fused_key {
 			return matched;
 		}
 
+		struct u64_family {
+			template<const std::string_view& text> using type = comparator_u64<text>;
+		};
+
+		template<typename copy_type> struct xmm_family {
+			template<const std::string_view& text> using type = comparator_xmm<text, copy_type>;
+		};
+
+		template<typename family> FUSED_KEY_INLINE const char* compareMixed(uint8_t keyId, const char* __restrict input) noexcept {
+			switch (keyId) {
+				case 0:
+					return family::template type<key9>::impl(input);
+				case 1:
+					return family::template type<key10>::impl(input);
+				case 2:
+					return family::template type<key11>::impl(input);
+				case 3:
+					return family::template type<key12>::impl(input);
+				case 4:
+					return family::template type<key13>::impl(input);
+				case 5:
+					return family::template type<key14>::impl(input);
+				case 6:
+					return family::template type<key15>::impl(input);
+				default:
+					return nullptr;
+			}
+		}
+
+		template<typename family> FUSED_KEY_INLINE uint64_t scanMixed(const key_corpus& corpus) noexcept {
+			const char* __restrict base{ corpus.data };
+			const uint32_t* __restrict offsets{ corpus.offsets };
+			const uint8_t* __restrict keyIds{ corpus.keyIds };
+			uint64_t matched{};
+			for (uint64_t i = 0; i < corpus.count; ++i) {
+				matched += static_cast<uint64_t>(compareMixed<family>(keyIds[i], base + offsets[i]) != nullptr);
+			}
+			return matched;
+		}
+
 	}
 
 	uint64_t scanU64Key9(const key_corpus& corpus) noexcept {
@@ -237,6 +277,22 @@ namespace fused_key {
 
 	uint64_t scanXmmPow2Key14(const key_corpus& corpus) noexcept {
 		return scan<comparator_xmm<key14, copy_pow2_decomp>>(corpus);
+	}
+
+	uint64_t scanU64Mixed(const key_corpus& corpus) noexcept {
+		return scanMixed<u64_family>(corpus);
+	}
+
+	uint64_t scanXmmMixed(const key_corpus& corpus) noexcept {
+		return scanMixed<xmm_family<copy_bucketed>>(corpus);
+	}
+
+	uint64_t scanXmmJsonifierMemcpyMixed(const key_corpus& corpus) noexcept {
+		return scanMixed<xmm_family<copy_jsonifier_memcpy>>(corpus);
+	}
+
+	uint64_t scanXmmPow2Mixed(const key_corpus& corpus) noexcept {
+		return scanMixed<xmm_family<copy_pow2_decomp>>(corpus);
 	}
 
 }
