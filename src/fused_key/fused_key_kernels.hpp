@@ -10,7 +10,20 @@ namespace fused_key {
 		const char* data{};
 		const uint32_t* offsets{};
 		uint64_t count{};
-		const uint8_t* keyIds{};
+	};
+
+	struct alignas(16) expected_block {
+		uint8_t bytes[16]{};
+	};
+
+	struct mixed_key_corpus {
+		const char* data{};
+		const uint32_t* offsets{};
+		const uint8_t* lengths{};
+		const uint64_t* expectedLo{};
+		const uint64_t* expectedHi{};
+		const expected_block* expectedBlocks{};
+		uint64_t count{};
 	};
 
 	inline constexpr std::string_view key9{ "\"userId\":" };
@@ -35,9 +48,8 @@ namespace fused_key {
 	uint64_t scanXmmPow2Key9(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmPow2Key11(const key_corpus& corpus) noexcept;
 	uint64_t scanXmmPow2Key14(const key_corpus& corpus) noexcept;
-	uint64_t scanU64Mixed(const key_corpus& corpus) noexcept;
-	uint64_t scanXmmMixed(const key_corpus& corpus) noexcept;
-	uint64_t scanXmmJsonifierMemcpyMixed(const key_corpus& corpus) noexcept;
-	uint64_t scanXmmPow2Mixed(const key_corpus& corpus) noexcept;
+	uint64_t scanU64Mixed(const mixed_key_corpus& corpus) noexcept;
+	uint64_t scanXmmMixed(const mixed_key_corpus& corpus) noexcept;
+	uint64_t scanXmmJsonifierMemcpyMixed(const mixed_key_corpus& corpus) noexcept;
 
 }

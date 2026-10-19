@@ -189,42 +189,68 @@ namespace fused_key {
 			return matched;
 		}
 
-		struct u64_family {
-			template<const std::string_view& text> using type = comparator_u64<text>;
-		};
-
-		template<typename copy_type> struct xmm_family {
-			template<const std::string_view& text> using type = comparator_xmm<text, copy_type>;
-		};
-
-		template<typename family> FUSED_KEY_INLINE const char* compareMixed(uint8_t keyId, const char* __restrict input) noexcept {
-			switch (keyId) {
-				case 0:
-					return family::template type<key9>::impl(input);
-				case 1:
-					return family::template type<key10>::impl(input);
-				case 2:
-					return family::template type<key11>::impl(input);
-				case 3:
-					return family::template type<key12>::impl(input);
-				case 4:
-					return family::template type<key13>::impl(input);
-				case 5:
-					return family::template type<key14>::impl(input);
-				case 6:
-					return family::template type<key15>::impl(input);
-				default:
-					return nullptr;
+		struct copy_bucketed_runtime {
+			FUSED_KEY_INLINE static void impl(void* __restrict dst, const void* __restrict src, uint64_t byte_count) noexcept {
+				jsonifierMemcpyUpTo<15>(dst, src, byte_count);
 			}
-		}
+		};
 
-		template<typename family> FUSED_KEY_INLINE uint64_t scanMixed(const key_corpus& corpus) noexcept {
+		struct copy_jsonifier_memcpy_runtime {
+			FUSED_KEY_INLINE static void impl(void* __restrict dst, const void* __restrict src, uint64_t byte_count) noexcept {
+				jsonifierMemcpy(dst, src, byte_count);
+			}
+		};
+
+		struct runtime_comparator_u64 {
+			FUSED_KEY_INLINE static const char* impl(const char* __restrict input, uint64_t length, uint64_t expectedLo, uint64_t expectedHi) noexcept {
+				uint64_t lo;
+				uint64_t hi;
+				pow2MemcpyWrapper<8>(&lo, input);
+				pow2MemcpyWrapper<8>(&hi, input + length - 8);
+				return !((lo ^ expectedLo) | (hi ^ expectedHi)) ? input + length : nullptr;
+			}
+		};
+
+		template<typename copy_type> struct runtime_comparator_xmm {
+#if FUSED_KEY_NEON
+			FUSED_KEY_INLINE static const char* impl(const char* __restrict input, uint64_t length, const expected_block& expected) noexcept {
+				uint8x16_t data1{ vdupq_n_u8(0) };
+				copy_type::impl(&data1, input, length);
+				const uint8x16_t data2{ vld1q_u8(expected.bytes) };
+				return vmaxvq_u8(veorq_u8(data1, data2)) == 0 ? input + length : nullptr;
+			}
+#else
+			FUSED_KEY_INLINE static const char* impl(const char* __restrict input, uint64_t length, const expected_block& expected) noexcept {
+				__m128i data1{ _mm_setzero_si128() };
+				copy_type::impl(&data1, input, length);
+				const __m128i data2{ _mm_load_si128(static_cast<const __m128i*>(static_cast<const void*>(expected.bytes))) };
+				const __m128i diff{ _mm_xor_si128(data1, data2) };
+				return _mm_testz_si128(diff, diff) ? input + length : nullptr;
+			}
+#endif
+		};
+
+		FUSED_KEY_INLINE uint64_t scanMixedU64(const mixed_key_corpus& corpus) noexcept {
 			const char* __restrict base{ corpus.data };
 			const uint32_t* __restrict offsets{ corpus.offsets };
-			const uint8_t* __restrict keyIds{ corpus.keyIds };
+			const uint8_t* __restrict lengths{ corpus.lengths };
+			const uint64_t* __restrict expectedLo{ corpus.expectedLo };
+			const uint64_t* __restrict expectedHi{ corpus.expectedHi };
 			uint64_t matched{};
 			for (uint64_t i = 0; i < corpus.count; ++i) {
-				matched += static_cast<uint64_t>(compareMixed<family>(keyIds[i], base + offsets[i]) != nullptr);
+				matched += static_cast<uint64_t>(runtime_comparator_u64::impl(base + offsets[i], lengths[i], expectedLo[i], expectedHi[i]) != nullptr);
+			}
+			return matched;
+		}
+
+		template<typename copy_type> FUSED_KEY_INLINE uint64_t scanMixedXmm(const mixed_key_corpus& corpus) noexcept {
+			const char* __restrict base{ corpus.data };
+			const uint32_t* __restrict offsets{ corpus.offsets };
+			const uint8_t* __restrict lengths{ corpus.lengths };
+			const expected_block* __restrict expectedBlocks{ corpus.expectedBlocks };
+			uint64_t matched{};
+			for (uint64_t i = 0; i < corpus.count; ++i) {
+				matched += static_cast<uint64_t>(runtime_comparator_xmm<copy_type>::impl(base + offsets[i], lengths[i], expectedBlocks[i]) != nullptr);
 			}
 			return matched;
 		}
@@ -279,20 +305,16 @@ namespace fused_key {
 		return scan<comparator_xmm<key14, copy_pow2_decomp>>(corpus);
 	}
 
-	uint64_t scanU64Mixed(const key_corpus& corpus) noexcept {
-		return scanMixed<u64_family>(corpus);
+	uint64_t scanU64Mixed(const mixed_key_corpus& corpus) noexcept {
+		return scanMixedU64(corpus);
 	}
 
-	uint64_t scanXmmMixed(const key_corpus& corpus) noexcept {
-		return scanMixed<xmm_family<copy_bucketed>>(corpus);
+	uint64_t scanXmmMixed(const mixed_key_corpus& corpus) noexcept {
+		return scanMixedXmm<copy_bucketed_runtime>(corpus);
 	}
 
-	uint64_t scanXmmJsonifierMemcpyMixed(const key_corpus& corpus) noexcept {
-		return scanMixed<xmm_family<copy_jsonifier_memcpy>>(corpus);
-	}
-
-	uint64_t scanXmmPow2Mixed(const key_corpus& corpus) noexcept {
-		return scanMixed<xmm_family<copy_pow2_decomp>>(corpus);
+	uint64_t scanXmmJsonifierMemcpyMixed(const mixed_key_corpus& corpus) noexcept {
+		return scanMixedXmm<copy_jsonifier_memcpy_runtime>(corpus);
 	}
 
 }
