@@ -133,3 +133,17 @@ jobs:
         shell: pwsh
         run: |
           & "C:/Program Files (x86)/benchmarksuite/bin/benchmarksuite-main.exe"
+
+      - name: Run Fused Key Compare (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          for binary in /usr/local/bin/fused-key-compare-*; do
+            sudo chmod +x "$binary"
+            sudo "$binary"
+          done
+
+      - name: Run Fused Key Compare (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-ChildItem "C:/Program Files (x86)/benchmarksuite/bin" -Filter "fused-key-compare-*.exe" | ForEach-Object { & $_.FullName }

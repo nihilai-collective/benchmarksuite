@@ -107,3 +107,7 @@ install(
     DESTINATION bin
     OPTIONAL
 )
+
+if (NOT BNCH_SWT_CUDA)
+    add_subdirectory(fused_key)
+endif()
