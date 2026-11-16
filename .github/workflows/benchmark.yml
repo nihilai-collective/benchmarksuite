@@ -142,12 +142,22 @@ jobs:
 
       - name: Run (Unix)
         if: runner.os != 'Windows'
+        shell: bash
         run: |
           sudo chmod +x /usr/local/bin/benchmarksuite-main
-          sudo /usr/local/bin/benchmarksuite-main
+          sudo /usr/local/bin/benchmarksuite-main | tee benchmark-results.txt
 
       - name: Run (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          & "C:/Program Files (x86)/benchmarksuite/bin/benchmarksuite-main.exe"
+          & "C:/Program Files (x86)/benchmarksuite/bin/benchmarksuite-main.exe" | Tee-Object -FilePath benchmark-results.txt
+          exit $LASTEXITCODE
+
+      - name: Upload Benchmark Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.os }}-${{ matrix.compiler }}
+          path: benchmark-results.txt
+          if-no-files-found: warn

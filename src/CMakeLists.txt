@@ -55,7 +55,17 @@ if (NOT BNCH_SWT_CUDA)
 
 endif()
 
-target_link_libraries(benchmarksuite-main PRIVATE benchmarksuite::benchmarksuite)
+include(FetchContent)
+
+FetchContent_Declare(
+    simdjson
+    GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+    GIT_TAG v5.2.0
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(simdjson)
+
+target_link_libraries(benchmarksuite-main PRIVATE benchmarksuite::benchmarksuite simdjson::simdjson)
 
 target_compile_definitions(
     benchmarksuite-main PRIVATE
